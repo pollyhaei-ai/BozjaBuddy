@@ -1,7 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Keys;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiScene;
 using System;
 using System.Collections.Generic;
 using System.Linq;

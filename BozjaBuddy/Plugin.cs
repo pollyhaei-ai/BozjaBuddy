@@ -1,6 +1,7 @@
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using System.IO;
+using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using BozjaBuddy.Windows;
 using BozjaBuddy.Data;

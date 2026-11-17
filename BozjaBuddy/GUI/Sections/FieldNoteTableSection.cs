@@ -4,7 +4,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Logging;
 using Dalamud.Bindings.ImGui;
-using ImGuiScene;
 using System;
 using System.Collections.Generic;
 using System.Linq;

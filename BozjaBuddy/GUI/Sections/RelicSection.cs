@@ -6,7 +6,6 @@ using System.Numerics;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Logging;
-using ImGuiScene;
 using BozjaBuddy.Data;
 using Dalamud.Interface.Internal;
 using Dalamud.Interface.Textures.TextureWraps;

@@ -9,7 +9,6 @@ using Dalamud.Logging;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Dalamud.Bindings.ImGui;
-using ImGuiScene;
 using Lumina.Excel.Sheets;
 using System;
 using System.Collections;

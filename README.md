@@ -24,9 +24,7 @@
 
 `%AppData%\FFXIVSimpleLauncher\Dalamud\Config\devPlugins\bozjaBuddy\`
 
-內容應有插件 dll、`BozjaBuddy.json`、`db`（`LostAction.db`、`UIMap_LostAction.json`、字型）、以及 `images/icon.png`。InternalName 仍是 `bozjaBuddy`，指令是 `/bb`。
-
-Dalamud.NET.Sdk 13.1.0 會去本機的 Dalamud `Hooks/dev` 找參考組件（yanmucorp 那份）。這份測試包若還沒有 `BozjaBuddy.dll`，是因為組包的環境沒有那組 API 13 參考組件，官方公開 distrib 目前也不是 API 13。原始碼已對到 `net9.0-windows7.0` 與 DalamudApiLevel 13，在有 XIVTCLauncher 的機器上建置後把 dll 放進同一個資料夾即可。
+內容有 `BozjaBuddy.dll`、`BozjaBuddy.json`、`db`（`LostAction.db`、`UIMap_LostAction.json`、字型）、`images/icon.png`，以及讀資料庫用的 `System.Data.SQLite.dll` 與 `SQLite.Interop.dll`。InternalName 仍是 `bozjaBuddy`，指令是 `/bb`。此 dll 是對 yanmucorp Dalamud 13.0.0.16（tag 26-10-03-01）建置的。
 
 ## 遊戲內請先確認
 

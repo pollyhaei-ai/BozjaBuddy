@@ -1,6 +1,5 @@
 using Dalamud.Utility;
 using Dalamud.Logging;
-using ImGuiScene;
 using Lumina.Data.Files;
 using Lumina.Extensions;
 using System;

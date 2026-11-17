@@ -1,6 +1,5 @@
 ﻿using BozjaBuddy.Data;
 using Dalamud.Bindings.ImGui;
-using ImGuiScene;
 
 namespace BozjaBuddy.Filter.FieldNoteTableSection
 {

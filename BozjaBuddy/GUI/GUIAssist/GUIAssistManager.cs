@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Logging;
-using ImGuiScene;
 using System.Numerics;
 using System.Linq;
 using Lumina.Excel.Sheets;
