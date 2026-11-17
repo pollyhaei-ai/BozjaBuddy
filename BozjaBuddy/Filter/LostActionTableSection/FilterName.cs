@@ -4,7 +4,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterName : Filter
     {
-        public override string mFilterName { get; set; } = "name";
+        public override string mFilterName { get; set; } = "名稱";
 
         public FilterName() { }
 

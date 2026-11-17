@@ -23,15 +23,15 @@ namespace BozjaBuddy.GUI.Sections
         private RelicSectionGuiFlag mGuiFlag = RelicSectionGuiFlag.None;
         private Dictionary<RelicStep, string> mTopicHeaders = new()
         {
-            { RelicStep.None, "Intro" },
-            { RelicStep.Resistance, "Resistance" },
-            { RelicStep.ResistanceA, "Resistance Aug." },
-            { RelicStep.Recollection, "Recollection" },
-            { RelicStep.LawsOrder, "Law's Order" },
-            { RelicStep.OTG_1, "One-time grind 1" },
-            { RelicStep.LawsOrderA, "Law's Order Aug." },
-            { RelicStep.OTG_2, "One-time grind 2" },
-            { RelicStep.Blades, "Blade's" }
+            { RelicStep.None, "簡介" },
+            { RelicStep.Resistance, "義軍武器" },
+            { RelicStep.ResistanceA, "義軍武器（強化）" },
+            { RelicStep.Recollection, "追憶" },
+            { RelicStep.LawsOrder, "律法" },
+            { RelicStep.OTG_1, "一次性收集 1" },
+            { RelicStep.LawsOrderA, "律法（強化）" },
+            { RelicStep.OTG_2, "一次性收集 2" },
+            { RelicStep.Blades, "刃" }
         };
         private List<RelicStep> mOrderedTopics = new()
         {
@@ -104,22 +104,18 @@ namespace BozjaBuddy.GUI.Sections
                 }
 
                 // Intro
-                if (ImGui.Selectable(this.mTopicHeaders[RelicStep.None], this.mCurrTopic == RelicStep.None)) this.mCurrTopic = RelicStep.None;
-                // Quest line
-                if (this.mPlugin.mBBDataManager.mQuestChains.TryGetValue(1, out var tQuestChain_Bozja) && tQuestChain_Bozja != null)
-                {
-                    UtilsGUI.SelectableLink_QuestChain(this.mPlugin, "Bozja Questline", tQuestChain_Bozja);
-                }
+                if (ImGui.Selectable(this.TopicLabel(RelicStep.None, tCurrJob), this.mCurrTopic == RelicStep.None)) this.mCurrTopic = RelicStep.None;
+                UtilsGUI.GreyText("各階段任務名稱來自遊戲資料。");
                 ImGui.Separator();
                 ImGui.Spacing();
                 // ===================================
                 // Tip
-                UtilsGUI.GreyText("(click image to link chat)");
+                UtilsGUI.GreyText("（點圖示可連結到聊天）");
                 // Relic steps
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(Vector2.One.X, ImGui.GetStyle().ItemSpacing.Y));
                 foreach (var step in this.mOrderedTopics)
                 {
-                    var header = this.mTopicHeaders[step];
+                    var header = this.TopicLabel(step, tCurrJob);
                     if (step == RelicStep.None) continue;
                     if (!this.mPlugin.Configuration.mIsRelicFirstTime && (step == RelicStep.OTG_1 || step == RelicStep.OTG_2)) continue;
                     // Relic progress button
@@ -149,7 +145,7 @@ namespace BozjaBuddy.GUI.Sections
                             }
                         }
                     }
-                    else UtilsGUI.SetTooltipForLastItem($"Mark as {(tProgress.HasFlag(step) ? "incompleted" : "completed")}.");
+                    else UtilsGUI.SetTooltipForLastItem(tProgress.HasFlag(step) ? "標記為未完成。" : "標記為已完成。");
                     // Relic icon
                     ImGui.SameLine();
                     float tIconHeight = 15;
@@ -181,9 +177,9 @@ namespace BozjaBuddy.GUI.Sections
                     this.mPlugin.Configuration.Save();
                 }
                 ImGui.SameLine();
-                UtilsGUI.GreyText("First-time");
+                UtilsGUI.GreyText("第一次");
                 ImGui.SameLine();
-                UtilsGUI.ShowHelpMarker("Tick if this is the first time this character start the relic grind.\n- This helps tailoring the guide to what user's need.");
+                UtilsGUI.ShowHelpMarker("如果這個角色是第一次做義軍武器，請勾選。\n會依此調整要顯示的步驟。");
                 // Job
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 if (ImGui.BeginCombo("##rlcJobCmb", this.mPlugin.Configuration.mRelicCurrJob.ToString()))
@@ -198,7 +194,7 @@ namespace BozjaBuddy.GUI.Sections
                     }
                     ImGui.EndCombo();
                 }
-                else UtilsGUI.SetTooltipForLastItem("Job of the relic you are working on");
+                else UtilsGUI.SetTooltipForLastItem("目前要追蹤的職業");
 
                 ImGui.EndListBox();
             }
@@ -223,11 +219,11 @@ namespace BozjaBuddy.GUI.Sections
         public void DrawTopic_Intro()
         {
             ImGui.PushTextWrapPos();
-            ImGui.Text("- This plugin mainly serves as a checklist for your relic progress.");
-            UtilsGUI.GreyText("  If you want the overall,");
+            ImGui.Text("這頁主要是義軍武器的進度清單。");
+            UtilsGUI.GreyText("  若要看整體說明，");
             ImGui.SameLine();
             // detail
-            if (UtilsGUI.SelectableLink(this.mPlugin, $"click me {(this.mGuiFlag.HasFlag(RelicSectionGuiFlag.Intro_ShowingDetail) ? "▼" : "▲")}", -1, pIsClosingPUOnClick: false, pIsAuxiLinked: false))
+            if (UtilsGUI.SelectableLink(this.mPlugin, $"點這裡 {(this.mGuiFlag.HasFlag(RelicSectionGuiFlag.Intro_ShowingDetail) ? "▼" : "▲")}", -1, pIsClosingPUOnClick: false, pIsAuxiLinked: false))
             {
                 if (this.mGuiFlag.HasFlag(RelicSectionGuiFlag.Intro_ShowingDetail)) this.mGuiFlag &= ~RelicSectionGuiFlag.Intro_ShowingDetail;
                 else this.mGuiFlag |= RelicSectionGuiFlag.Intro_ShowingDetail;
@@ -236,75 +232,70 @@ namespace BozjaBuddy.GUI.Sections
             {
                 if (ImGui.BeginChild("##introDetail", new(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().FramePadding.X * 2, 300), true))
                 {
-                    ImGui.Text("Players will be doing two things throughout the Bozja content:");
+                    ImGui.Text("在博茲雅前線內容裡，大致會同時做兩件事：");
                     UtilsGUI.GreyText(
                         """
-                        1. Progressing Bozja areas. (i.e. unlocking Bozja zones, raids, etc.)
-                        2. Progressing Bozja relics. (i.e. unlocking new relic steps)
+                        1. 推進博茲雅前線區域（解鎖各區與攻城戰等）。
+                        2. 推進義軍武器（解鎖下一個武器階段）。
                         """
                     );
-                    UtilsGUI.GreyText("""As such, you can think of there being 2 mini-questlines running in parallel.""");
-                    ImGui.Text("You can kinda see that in the graph of the ");
-                    if (this.mPlugin.mBBDataManager.mQuestChains.TryGetValue(1, out var tQuestChain_ResWp) && tQuestChain_ResWp != null)
-                    {
-                        ImGui.SameLine();
-                        UtilsGUI.SelectableLink_QuestChain(this.mPlugin, "Resistance Weapons questline.", tQuestChain_ResWp);
-                    }
+                    UtilsGUI.GreyText("""可以把它想成兩條並行的小任務線。""");
+                    ImGui.Text("各階段左側會列出對應任務，名稱來自遊戲資料。");
 
                     ImGui.Separator();
 
-                    if (ImGui.CollapsingHeader("Progressing Bozja areas:"))
+                    if (ImGui.CollapsingHeader("推進區域："))
                     {
                         ImGui.PushTextWrapPos();
-                        UtilsGUI.GreyText("""- Collecting mettles, turning them in to level up your rank. Rinse and repeat.""");
+                        UtilsGUI.GreyText("""- 收集戰勲，拿去提升軍階，然後重複。""");
                         ImGui.SameLine();
-                        UtilsGUI.ShowHelpMarker("- Quickest way to get mettles is doing FATEs and Critical engagement.\r\n- Get the riding maps ASAP (mount speed buff). Sold for 25 clusters, by NPC Quartermaster at the base in the instance.");
+                        UtilsGUI.ShowHelpMarker("最快的戰勲來自危命任務與特殊遭遇戰。\r\n坐騎地圖（移動速度加成）建議盡早買，基地的軍需官以 25 個戰勲簇出售。");
 
-                        UtilsGUI.GreyText("- The wiki site does a great job at the basics.");
+                        UtilsGUI.GreyText("- 基礎流程可以對照公開的博茲雅前線說明。");
                         ImGui.SameLine();
                         UtilsGUI.UrlButton("https://ffxiv.consolegameswiki.com/wiki/The_Bozjan_Southern_Front");
 
                         UtilsGUI.GreyText(
                             """
-                            - Join a community. 
-                            - They're super helpful and will make your experience much more enjoyable.
+                            - 建議找固定隊。
+                            - 有人一起打會輕鬆很多。
                             """
                             );
                         ImGui.SameLine();
-                        UtilsGUI.ShowHelpMarker("some communities are included in the [DRS/Communities] tab in this plugin");
+                        UtilsGUI.ShowHelpMarker("此精簡版已移除社群與女王古殿分頁，請自行尋找固定隊。");
                         UtilsGUI.GreyText(
                             """
-                        - Rank milestones: 
-                                1       unlock Bozja zone 1
-                                5       unlock Bozja zone 2
-                                8       unlock Bozja zone 3
-                                10      unlock CLL, then Delubrum Reginae, then Zadnor
-                                15      unlock Delubrum Reginae Savage
-                                18      unlock Zadnor zone 2
-                                22      unlock Zadnor zone 3
-                                25      unlock Dalriada
+                        - 軍階節點：
+                                1       博茲雅前線・一區
+                                5       博茲雅前線・二區
+                                8       博茲雅前線・三區
+                                10      湖岸堡攻城戰，接著女王古殿，再來札杜諾爾高原
+                                15      女王古殿零式
+                                18      札杜諾爾高原・二區
+                                22      札杜諾爾高原・三區
+                                25      達利阿達攻城戰
                         """
                             );
                         ImGui.PopTextWrapPos();
                     }
                     
-                    if (ImGui.CollapsingHeader("Progressing Bozja relics:"))
+                    if (ImGui.CollapsingHeader("推進義軍武器："))
                     {
                         ImGui.PushTextWrapPos();
 
-                        UtilsGUI.GreyText("""- To progress in Bozja relics, you slso need to progress in Bozja content.""");
+                        UtilsGUI.GreyText("""- 義軍武器的進度通常也需要博茲雅前線的內容進度。""");
                         UtilsGUI.GreyText(
                             """
-                            - A Bozja relic step generally has two approaches:
-                                    1. Bozja approach:                    grinding content related to Bozja.
-                                    2. Non-Bozja approach.           grinding content unrelated to Bozja.
-                            - If you have BLU, then non-Bozja approach is preferred for some steps.
+                            - 每個階段通常有兩種做法：
+                                    1. 博茲雅路線：刷博茲雅前線相關內容。
+                                    2. 非博茲雅路線：刷博茲雅以外的內容。
+                            - 若有青魔，部分步驟比較適合走非博茲雅路線。
 
-                            - If it's your first time doing Bozja relic, you will have the following changes:
-                                    + Extra two steps: One-time grind 1 & 2
-                                    + First step [Resistance] will not require any poetics.
-                                    + Other minor stuff.
-                            - Tick the [Fist Time] box at the bottom of the list on the left if it applies to you.
+                            - 第一次做義軍武器時：
+                                    + 會多「一次性收集 1」與「一次性收集 2」。
+                                    + 第一階段不需要詩學神典石。
+                                    + 還有一些小差異。
+                            - 請勾選左側下方的「第一次」。
                             """);
 
                         ImGui.PopTextWrapPos();
@@ -314,16 +305,16 @@ namespace BozjaBuddy.GUI.Sections
                 }
             }
 
-            UtilsGUI.GreyText("- Tick the [Fist Time] box at the bottom of the list on the left if it applies to you.");
+            UtilsGUI.GreyText("- 若是這個角色第一次做，請勾選左側下方的「第一次」。");
             ImGui.Text(
                     """
-                    - Prerequisites:
-                            + Lv 80+
-                            + Post-ShB 5.55 MSQ: "Death Unto Dawn"
-                            + Completion of quest line "Return to Ivalice".
+                    - 前置：
+                            + 80 級以上
+                            + 完成暗影之逆焰 5.55 主線
+                            + 完成重返伊瓦利斯系列
                     """
                 );
-            ImGui.Text("- All steps must be done synced, and can be done using any class and any gear/weapon.");
+            ImGui.Text("- 各步驟都要限制等級，職業與裝備沒有限制。");
 
             ImGui.Spacing();
             ImGui.Spacing();
@@ -331,15 +322,15 @@ namespace BozjaBuddy.GUI.Sections
 
             UtilsGUI.GreyText(
                             """
-                            - A Bozja relic step generally has two approaches:
-                                    1. Bozja approach:                    grinding content related to Bozja.
-                                    2. Non-Bozja approach.           grinding content unrelated to Bozja.
-                            - If you have BLU, then non-Bozja approach is preferred for some steps.
+                            - 每個階段通常有兩種做法：
+                                    1. 博茲雅路線：刷博茲雅前線相關內容。
+                                    2. 非博茲雅路線：刷博茲雅以外的內容。
+                            - 若有青魔，部分步驟比較適合走非博茲雅路線。
 
-                            - If it's your first time doing Bozja relic, you will have the following changes:
-                                    + Extra two steps: One-time grind 1 & 2
-                                    + First step [Resistance] will not require any poetics.
-                                    + Other minor stuff.
+                            - 第一次做義軍武器時：
+                                    + 會多「一次性收集 1」與「一次性收集 2」。
+                                    + 第一階段不需要詩學神典石。
+                                    + 還有一些小差異。
                             """);
 
             ImGui.PopTextWrapPos();
@@ -366,15 +357,15 @@ namespace BozjaBuddy.GUI.Sections
                     ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69381);
                     this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, 30273, pMaxCount: 4);
                     this._textSectionEnd(); ImGui.SameLine(); ImGui.Text("|___ ");
-                    ImGui.SameLine(); UtilsGUI.GreyText("Vendor:");
+                    ImGui.SameLine(); UtilsGUI.GreyText("商人：");
                     if (this.mPlugin.mBBDataManager.mVendors.TryGetValue(3, out var tVendor) && tVendor != null && tVendor.mLocation != null)
                     {
                         ImGui.SameLine();
                         ImGui.PushStyleColor(ImGuiCol.Text, UtilsGUI.Colors.BackgroundText_Grey);
-                        UtilsGUI.LocationLinkButton(this.mPlugin, tVendor.mLocation, pDesc: $"{tVendor.mName} ({tVendor.mLocation.ToStringFull()})");
+                        UtilsGUI.LocationLinkButton(this.mPlugin, tVendor.mLocation, pDesc: tVendor.mLocation.ToStringFull());
                         ImGui.PopStyleColor();
                     }
-                    this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("(250 poetics each)");
+                    this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("（每個 250 詩學神典石）");
 
                 }
                 ImGui.EndChild();
@@ -396,18 +387,18 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69506);
                 // Tortured
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Tortured, pMaxCount: 20);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Drops from FATEs/CE in Bozja Zone 1"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Drops from FATEs in:");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("a2f1", "Sea of Clouds"); ImGui.SameLine(); this._textLoc("r2f1");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("博茲雅前線・一區的危命／特殊遭遇戰會掉落"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("也會從這些地圖的危命掉落：");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("a2f1", "阿巴拉提亞雲海"); ImGui.SameLine(); this._textLoc("r2f1");
                 // Sorrowful
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Sorrowful, pMaxCount: 20);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Drops from FATEs/CE in Bozja Zone 2"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Drops from FATEs in:");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("博茲雅前線・二區的危命／特殊遭遇戰會掉落"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("也會從這些地圖的危命掉落：");
                 this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("d2f1"); ImGui.SameLine(); this._textLoc("d2f3");
                 // Harrowing
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Harrowing, pMaxCount: 20);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Drops from FATEs/CE in Bozja Zone 3"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Drops from FATEs in:");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("博茲雅前線・三區的危命／特殊遭遇戰會掉落"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("也會從這些地圖的危命掉落：");
                 this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("a2f2"); ImGui.SameLine(); this._textLoc("d2f2");
                 ImGui.EndChild();
             }
@@ -419,10 +410,10 @@ namespace BozjaBuddy.GUI.Sections
             {
                 if (ImGui.BeginMenuBar())
                 {
-                    UtilsGUI.GreyText("Prerequisites");
+                    UtilsGUI.GreyText("前置");
                     ImGui.EndMenuBar();
                 }
-                UtilsGUI.GreyText("Quests -------------------");
+                UtilsGUI.GreyText("任務");
                 UtilsGUI.SelectableLink_Quest(this.mPlugin, 69477);
                 UtilsGUI.SelectableLink_Quest(this.mPlugin, 69505);
                 ImGui.EndChild();
@@ -442,9 +433,9 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69507);
                 // Bitter
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Bitter, pMaxCount: 6);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Guaranteed from lv60 SYNCED dungeons. (recommending 'The Antitower')");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Guaranteed from Duty roulette: Leveling. (once a day)");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("Random drops from mobs and CEs in Bozja. (low chance)"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("60 級同步迷宮必定掉落（建議逆塔）。");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("每日一次的等級提升任務輪盤必定取得。");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("博茲雅前線的敵人與特殊遭遇戰有低機率掉落。"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
 
                 ImGui.EndChild();
             }
@@ -465,12 +456,12 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69574);
                 // Loathsome
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Loathsome, pMaxCount: 15);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 5) guaranteed per Castrum Lacus Litore clear"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) (low chance) per Bozja CE"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) guaranteed per any \"Crystal Tower\" raid clear");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- Syrcus Tower"); ImGui.SameLine(); this._textRecSign("Recommended for quickest");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The World of Darkness");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The Labyrinth of the Ancients");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×5）每通過一次湖岸堡攻城戰必定取得"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×1）博茲雅前線的特殊遭遇戰有低機率掉落"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×1）任一水晶塔系列討伐必定取得");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 希爾科斯塔"); ImGui.SameLine(); this._textRecSign("想求快的話建議這個");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 暗影世界");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 古代人迷宮");
                 ImGui.EndChild();
             }
             ImGui.PopStyleColor();
@@ -482,14 +473,14 @@ namespace BozjaBuddy.GUI.Sections
             {
                 if (ImGui.BeginMenuBar())
                 {
-                    UtilsGUI.GreyText("Prerequisites");
+                    UtilsGUI.GreyText("前置");
                     ImGui.EndMenuBar();
                 }
-                UtilsGUI.GreyText("Quests -------------------");
+                UtilsGUI.GreyText("任務");
                 UtilsGUI.SelectableLink_Quest(this.mPlugin, 69477);
-                UtilsGUI.GreyText("Cleared ------------------");
-                ImGui.Text("Castrum Lacus Litore");
-                ImGui.Text("Delubrum Reginae");
+                UtilsGUI.GreyText("需已通過");
+                ImGui.Text("湖岸堡攻城戰");
+                ImGui.Text("女王古殿");
                 ImGui.EndChild();
             }
         }
@@ -506,26 +497,26 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69575);
                 // Haunting
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Haunting, pMaxCount: 18);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 3) guaranteed per any \"Shadow of the Mhach\" raid clear");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The Void Ark"); ImGui.SameLine(); this._textRecSign("Recommended for quickest");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The Weeping City of Mhach");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- Dun Scaith");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×3）任一瑪哈之影系列討伐必定取得");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 虛空方舟"); ImGui.SameLine(); this._textRecSign("想求快的話建議這個");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 瑪哈的泣城");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 影之國");
                 this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine();
                 ImGui.PushStyleColor(ImGuiCol.Text, UtilsGUI.Colors.BackgroundText_Grey);
-                ImGui.TextUnformatted("(x 1) (66% chance) drops from FATEs in:");
+                ImGui.TextUnformatted("（×1，約 66%）這些地圖的危命會掉落：");
                 ImGui.PopStyleColor();
                 this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("g3f1"); ImGui.SameLine(); this._textLoc("g3f2"); ImGui.SameLine(); this._textLoc("g3f3"); ImGui.SameLine(); this._textRecSign();
                 // Vexing
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Vexatious, pMaxCount: 18);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 3) guaranteed per any \"Return to Ivalice\" raid clear");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The Royal City of Rabanastre");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The Ridorana Lighthouse");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- The Orbonne Monastery");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×3）任一重返伊瓦利斯系列討伐必定取得");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 拉巴納斯塔王城");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 里多拉納大燈塔");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 歐邦修道院");
                 this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); 
                 ImGui.PushStyleColor(ImGuiCol.Text, UtilsGUI.Colors.BackgroundText_Grey);
-                ImGui.TextUnformatted("(x 1) (66% chance) drops from FATEs in:");
+                ImGui.TextUnformatted("（×1，約 66%）這些地圖的危命會掉落：");
                 ImGui.PopStyleColor();
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("e3f1", "Ruby Sea"); ImGui.SameLine(); this._textLoc("e3f2"); ImGui.SameLine(); this._textLoc("e3f3", "Azim Steppes"); ImGui.SameLine(); this._textRecSign();
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); this._textLoc("e3f1", "紅玉海"); ImGui.SameLine(); this._textLoc("e3f2"); ImGui.SameLine(); this._textLoc("e3f3", "太陽神草原"); ImGui.SameLine(); this._textRecSign();
 
                 ImGui.EndChild();
             }
@@ -546,10 +537,10 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69576);
                 // Timeworn
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.TimeWorn, pMaxCount: 15);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) every 10 floors of Palace of the Dead");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- low chance, increase as progressing further");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 3) guaranteed per Delubrum Reginae clear");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- must use PF for this, or may join a community");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×1）死者宮殿每 10 層");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 機率偏低，越往後越高");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×3）每通過一次女王古殿必定取得");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionEnd(); ImGui.SameLine(); UtilsGUI.GreyText("- 需要自行招募，或加入固定隊");
 
                 ImGui.EndChild();
             }
@@ -569,7 +560,7 @@ namespace BozjaBuddy.GUI.Sections
             if (ImGui.BeginChild("##tr_content1", new(ImGui.GetContentRegionAvail().X / 10 * 6f, tContent1Height)))
             {
                 ImGui.Text("1. Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69632);
-                ImGui.Text("2. Grab these 3 following quests:");
+                ImGui.Text("2. 再接下面這 3 個任務：");
                 this._textSectionCont(); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69633);
                 this._textSectionCont(); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69634);
                 this._textSectionCont(); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69635);
@@ -584,13 +575,13 @@ namespace BozjaBuddy.GUI.Sections
             {
                 if (ImGui.BeginMenuBar())
                 {
-                    UtilsGUI.GreyText("Prerequisites");
+                    UtilsGUI.GreyText("前置");
                     ImGui.EndMenuBar();
                 }
-                UtilsGUI.GreyText("Quests -------------------");
+                UtilsGUI.GreyText("任務");
                 UtilsGUI.SelectableLink_Quest(this.mPlugin, 69620);
                 ImGui.PushTextWrapPos();
-                UtilsGUI.GreyText("(which unlock Zadnor, where this step is)");
+                UtilsGUI.GreyText("（這個任務會解鎖札杜諾爾高原，本步驟在那裡）");
                 ImGui.PopTextWrapPos();
                 ImGui.EndChild();
             }
@@ -600,52 +591,52 @@ namespace BozjaBuddy.GUI.Sections
             if (ImGui.BeginChild("##tr_content2", new(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().FramePadding.X * 2, tHeight - tContent1Height - ImGui.GetStyle().FramePadding.Y * 2 + 2)))
             {
                 // Path options
-                ImGui.Text("3. Grind by");
+                ImGui.Text("3. 收集方式");
                 ImGui.SameLine();
-                if (ImGui.BeginCombo("##cmbRelicOTG2Path", tConfig.mRelicOTG2Path == 0 ? "Zadnor Fate/CE" : "Raids"))
+                if (ImGui.BeginCombo("##cmbRelicOTG2Path", tConfig.mRelicOTG2Path == 0 ? "札杜諾爾危命／特殊遭遇戰" : "討伐"))
                 {
                     Vector2 tAnchor = ImGui.GetCursorScreenPos();
-                    if (ImGui.Selectable("Zadnor Fate/CE")) tConfig.mRelicOTG2Path = 0;
+                    if (ImGui.Selectable("札杜諾爾危命／特殊遭遇戰")) tConfig.mRelicOTG2Path = 0;
                     ImGui.SetCursorScreenPos(tAnchor + new Vector2(90, 0));
-                    UtilsGUI.GreyText("recommended until rank 25 for Dalriada");
-                    if (ImGui.Selectable("Raids")) tConfig.mRelicOTG2Path = 1;
+                    UtilsGUI.GreyText("軍階 25 以前建議走這條，以便打達利阿達攻城戰");
+                    if (ImGui.Selectable("討伐")) tConfig.mRelicOTG2Path = 1;
                     ImGui.EndCombo();
                 }
                 if (tConfig.mRelicOTG2Path == 0)
                 {
                     ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
                 }
-                ImGui.SameLine(); UtilsGUI.ShowHelpMarker("You can switch between these 2 ways to grind, but it's probably more efficient to focus on a single one.");
+                ImGui.SameLine(); UtilsGUI.ShowHelpMarker("兩種方式可以切換，但集中做一種通常比較快。");
                 // Path
                 if (tConfig.mRelicOTG2Path == 0)        // zadnor
                 {
                     // zone 1
-                    UtilsGUI.GreyText("| Zone 1");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactAxle, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("((x 1) per Fate)");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactSpring, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("((x 2) per CE)");
+                    UtilsGUI.GreyText("| 一區");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactAxle, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("（危命 ×1）");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactSpring, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("（特殊遭遇戰 ×2）");
                     // zone 2
-                    UtilsGUI.GreyText("| Zone 2");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RealmBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("((x 1) per Fate)");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RiftBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("((x 2) per CE)");
+                    UtilsGUI.GreyText("| 二區");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RealmBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("（危命 ×1）");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RiftBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("（特殊遭遇戰 ×2）");
                     // zone 3
-                    UtilsGUI.GreyText("| Zone 3");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Bleak, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("((x 1) per Fate)");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Lurid, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("((x 2) per CE)");
+                    UtilsGUI.GreyText("| 三區");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Bleak, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("（危命 ×1）");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Lurid, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("（特殊遭遇戰 ×2）");
                 }
                 else                                    // raids
                 {
                     // alexander
-                    UtilsGUI.GreyText("| Alexander");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactAxle, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) per Alexander (1, 2, 5, 6, 9, 10) clear");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactSpring, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) per Alexander (3, 4, 7, 8, 11, 12) clear");
+                    UtilsGUI.GreyText("| 亞歷山大");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactAxle, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("亞歷山大 1、2、5、6、9、10 各 ×1");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.CompactSpring, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("亞歷山大 3、4、7、8、11、12 各 ×1");
                     // omega
-                    UtilsGUI.GreyText("| Omega");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RealmBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) per Omega (1, 2, 5, 6, 9, 10) clear");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RiftBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) per Omega (3, 4, 7, 8, 11, 12) clear");
+                    UtilsGUI.GreyText("| 歐米茄");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RealmBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("歐米茄 1、2、5、6、9、10 各 ×1");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RiftBook, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("歐米茄 3、4、7、8、11、12 各 ×1");
                     // eden
-                    UtilsGUI.GreyText("| Eden");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Bleak, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) per Eden (1, 2, 5, 6, 9, 10) clear");
-                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Lurid, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) per Eden (3, 4, 7, 8, 11, 12) clear");
+                    UtilsGUI.GreyText("| 伊甸");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Bleak, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("伊甸 1、2、5、6、9、10 各 ×1");
+                    this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.Memory_Lurid, pMaxCount: 30); ImGui.SameLine(); UtilsGUI.GreyText("伊甸 3、4、7、8、11、12 各 ×1");
                 }
                 ImGui.Text("4. Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69636);
 
@@ -666,10 +657,10 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.Text("Q:"); ImGui.SameLine(); UtilsGUI.SelectableLink_Quest(this.mPlugin, 69637);
                 // Loathsome
                 this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.InventoryItemWidget(this.mPlugin, (int)UtilsGameData.LuminaItemId.RawEmotion, pMaxCount: 15);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 3) guaranteed per Dalriada clear"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 2) guaranteed per Delubrum Reginae clear");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) guaranteed per any lv. 70 dungeon clear");
-                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("(x 1) every 10 floors of Heavens-on-High (low chance, increase as progress further)");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×3）每通過一次達利阿達攻城戰必定取得"); ImGui.SameLine(); this._textLoc("e3ec", pUseIcon: true);
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×2）每通過一次女王古殿必定取得");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×1）任一 70 級迷宮必定取得");
+                this._textSectionCont(); ImGui.SameLine(); this._textSectionBegin(); ImGui.SameLine(); UtilsGUI.GreyText("（×1）天之御柱每 10 層（機率偏低，越往後越高）");
                 ImGui.EndChild();
             }
             ImGui.PopStyleColor();
@@ -688,10 +679,21 @@ namespace BozjaBuddy.GUI.Sections
                 ImGui.PopStyleColor();
             }
         }
+        private string TopicLabel(RelicStep step, Job job)
+        {
+            if (step != RelicStep.None && step != RelicStep.OTG_1 && step != RelicStep.OTG_2
+                && UtilsGameData.kRelicsAndJobs.TryGetValue(step, out var jobs)
+                && jobs.TryGetValue(job, out var itemId))
+            {
+                var name = SheetNames.Item(this.mPlugin, (uint)itemId);
+                if (!string.IsNullOrWhiteSpace(name)) return name;
+            }
+            return this.mTopicHeaders[step];
+        }
         private void _textRecSign(string? pDesc = null)
         {
             ImGui.Text("*");
-            UtilsGUI.SetTooltipForLastItem(pDesc ?? "Recommended");
+            UtilsGUI.SetTooltipForLastItem(pDesc ?? "建議");
         }
 
         public override void DrawGUIDebug() { }

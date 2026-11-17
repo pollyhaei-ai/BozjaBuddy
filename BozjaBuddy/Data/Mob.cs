@@ -1,7 +1,6 @@
 using System.Data.SQLite;
 using System;
 using System.Collections.Generic;
-using BozjaBuddy.GUI.Sections;
 using BozjaBuddy.Utils;
 using System.Linq;
 
@@ -42,13 +41,14 @@ namespace BozjaBuddy.Data
         }
         public override string GetReprClipboardTooltip()
         {
-            return $"[{this.mName}] • [Type: {this.mType}] • [Lcoation: {WeatherBarSection._mTerritories[this.mTerritoryType]} x:{this.mMapCoordX} y:{this.mMapCoordY}] • [{this.mNote}]";
+            var loc = this.mLocation == null ? "" : this.mLocation.ToStringFull();
+            return $"[{this.mName}] • [{loc}]";
         }
         protected override void SetUpAuxiliary()
         {
-            this.mDetail = $"[{this.mType}] • [Rank: {this.mLevel}]";
-            this.mDescription = this.mNote;
-            this.mIGMarkup = new GUI.IGMarkup.IGMarkup(this.mNote);
+            this.mDetail = this.mLocation?.ToStringFull() ?? string.Empty;
+            this.mDescription = string.Empty;
+            this.mIGMarkup = null;
         }
         protected override string GenReprUiTooltip()
         {
@@ -56,7 +56,7 @@ namespace BozjaBuddy.Data
                 "\n\t\t\t\t\t",
                 this.mLinkMobs.Select(o => this.mPlugin.mBBDataManager.mMobs.ContainsKey(o)
                                             ? this.mPlugin.mBBDataManager.mMobs[o].mName + $" --- ({this.mPlugin.mBBDataManager.mMobs[o].mLocation?.ToString()} x:{this.mPlugin.mBBDataManager.mMobs[o].mLocation?.mMapCoordX} y:{this.mPlugin.mBBDataManager.mMobs[o].mLocation?.mMapCoordY})"
-                                            : "unknown")
+                                            : "不明")
                                    .ToList()
                 );
             string tFragDrops = string.Join(
@@ -64,15 +64,15 @@ namespace BozjaBuddy.Data
                 this.mLinkFragments.Select(o => this.mPlugin.mBBDataManager.mFragments.ContainsKey(o)
                                             ? this.mPlugin.mBBDataManager.mFragments[o].mName
                                                 + (this.mPlugin.mBBDataManager.mFragments[o].mLinkVendors.Count > 0
-                                                    ? " (cluster)"
+                                                    ? "（戰勲簇）"
                                                     : "")
-                                            : "unknown")
+                                            : "不明")
                                    .ToList()
                                     );
 
-            this.mUiTooltip = $"Name:\t{this.mName}"
-                            + $"\nFrags: \t{tFragDrops}"
-                            + $"\nLoc.:\t\t{this.mLocation?.ToString()} x:{this.mLocation?.mMapCoordX} y:{this.mLocation?.mMapCoordY}";
+            this.mUiTooltip = $"名稱：\t{this.mName}"
+                            + $"\n碎片：\t{tFragDrops}"
+                            + $"\n位置：\t{this.mLocation?.ToStringFull()}";
             return this.mUiTooltip;
         }
         protected override void SetUpNodeInfo()

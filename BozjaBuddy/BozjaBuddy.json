@@ -1,21 +1,19 @@
 {
     "Author": "K-Cli",
-    "Name": "Bozja Buddy",
-    "Punchline": "Improve your Bozja suffering. Maybe.",
-    "Description": "Features:\n• Resistance relic guide and tracking.\n• Info about Lost Actions, Fragments, FATEs/CE, Field Notes e.g. location, drops, marketboard price, fate chains, mettle rewards, exp rewards, etc.\n• Node graph viewer.\n• Weather forecast.\n• Alarms based on time, weather, and FATE/CE.\n• Custom loadouts planning, saving, and sharing. Featuring recommended loadouts from many communities.\n• Overlay for Lost Find Cache. Filterable by name, role, fragment, weight, and Custom Loadout of choice.\n• View Bozja stats and Cache from anywhere. Customisable alert for actions that are running low.\n• Delubrum Reginae (Savage) resources and communities.",
+    "Name": "博茲雅助手",
+    "Punchline": "博茲雅前線與札杜諾爾高原的精簡筆記。",
+    "Description": "1.2.0-tw 繁中台灣精簡版（Dalamud API 13 / .NET 9）。\n• 義軍武器進度\n• 失傳技能與遺忘的碎片\n• 戰地筆記\n• 失傳技能持有欄覆蓋視窗\n\n上游作者為 kaleidocli / K-Cli（https://github.com/kaleidocli/BozjaBuddy）。此為縮減後的台灣 API 13 分支，不宣稱原創，亦未新增上游未授予的授權。",
     "InternalName": "bozjaBuddy",
+    "AssemblyVersion": "1.2.0.0",
     "ApplicableVersion": "any",
+    "DalamudApiLevel": 13,
     "Tags": [
         "bozja",
-        "buddy",
         "zadnor",
-        "foray",
-        "fate",
-        "fragment",
         "relic",
-        "alarm",
-        "node",
-        "graph"
+        "fragment",
+        "taiwan"
     ],
-    "AcceptsFeedback": true
+    "AcceptsFeedback": true,
+    "RepoUrl": "https://github.com/pollyhaei-ai/BozjaBuddy"
 }

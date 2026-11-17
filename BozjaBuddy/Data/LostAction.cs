@@ -13,6 +13,8 @@ namespace BozjaBuddy.Data
         protected override GeneralObjectSalt mIdSalt { get; set; } = GeneralObjectSalt.LostAction;
         public override int mId { get; set; } = 0;
         public override string mName { get; set; } = String.Empty;
+        /// <summary>English database name, kept so blurbs can be rewritten with the live sheet name.</summary>
+        public string mNameEn { get; set; } = String.Empty;
         public RoleFlag mRole { get; set; } = new RoleFlag();
         public string mDescription_semi { get; set; } = String.Empty;
         public string mUsage { get; set; } = String.Empty;
@@ -28,7 +30,8 @@ namespace BozjaBuddy.Data
         public LostAction(Plugin pPlugin, SQLiteDataReader pPackage) {
             this.mPlugin = pPlugin;
             mId = Convert.ToInt32(pPackage["id"]);
-            mName = (string)pPackage["name"];
+            mNameEn = (string)pPackage["name"];
+            mName = SheetNames.Action(pPlugin, (uint)mId) ?? mNameEn;
             mRole = new RoleFlag(Convert.ToInt32(pPackage["role"]));
             mDescription_semi = (string)pPackage["effectSemi"];
             mUsage = (string)pPackage["usage"];
@@ -47,7 +50,7 @@ namespace BozjaBuddy.Data
         }
 
         public override string GetReprClipboardTooltip()
-            => $"[{this.mName}] • [Role: {this.mRole}] • [Charges: {this.mCharges}] • [Weight: {this.mWeight}] • [Cast/Recast: {this.mCast}s/{this.mRecast}s] • [{this.mDescription_semi.Replace("\n", ". ")}] • [Frags: {String.Join(", ", this.mLinkFragments.Select(id => this.mPlugin.mBBDataManager.mFragments[id].mName))}]";
+            => $"[{this.mName}] • [職能：{this.mRole}] • [次數：{this.mCharges}] • [重量：{this.mWeight}] • [詠唱／復唱：{this.mCast}秒／{this.mRecast}秒] • [{this.mDescription_semi.Replace("\n", "。")}] • [碎片：{String.Join("、", this.mLinkFragments.Select(id => this.mPlugin.mBBDataManager.mFragments[id].mName))}]";
         protected override string GenReprUiTooltip()
         {
             string tFateText = "";
@@ -60,9 +63,9 @@ namespace BozjaBuddy.Data
                                        .Select(o => this.mPlugin.mBBDataManager.mFates.ContainsKey(o)
                                                 ? this.mPlugin.mBBDataManager.mFates[o].mName
                                                   + (this.mPlugin.mBBDataManager.mFates[o].mLinkVendors.Count > 0
-                                                    ? " (cluster)"
+                                                    ? "（戰勲簇）"
                                                     : "")
-                                                : "unknown")
+                                                : "不明")
                                        .ToList()
                     );
             }
@@ -76,7 +79,7 @@ namespace BozjaBuddy.Data
                     this.mPlugin.mBBDataManager.mFragments[iFragId].mLinkMobs
                                        .Select(o => this.mPlugin.mBBDataManager.mMobs.ContainsKey(o)
                                                 ? this.mPlugin.mBBDataManager.mMobs[o].mName
-                                                : "unknown")
+                                                : "不明")
                                        .ToList()
                     );
             }
@@ -85,24 +88,24 @@ namespace BozjaBuddy.Data
                 this.mLinkFragments.Select(o => this.mPlugin.mBBDataManager.mFragments.ContainsKey(o)
                                             ? this.mPlugin.mBBDataManager.mFragments[o].mName
                                                 + (this.mPlugin.mBBDataManager.mFragments[o].mLinkVendors.Count > 0
-                                                    ? " (cluster)"
+                                                    ? "（戰勲簇）"
                                                     : "")
-                                            : "unknown")
+                                            : "不明")
                                    .ToList()
                                     );
 
-            this.mUiTooltip = $"Name:\t\t\t\t{this.mName}"
-                            + $"\nRole:   \t\t\t\t{this.mRole}"
+            this.mUiTooltip = $"名稱：\t{this.mName}"
+                            + $"\n職能：\t{this.mRole}"
                             + $"\n\n{this.mDescription_semi}"
-                            + $"\n\nFragments:  \t{tFragDrops}"
-                            + $"\nFATE drops:  \t{tFateText}"
-                            + $"\nMob drops:   \t{tMobDrops}";
+                            + $"\n\n碎片：\t{tFragDrops}"
+                            + $"\n來源危命：\t{tFateText}"
+                            + $"\n來源敵人：\t{tMobDrops}";
             return this.mUiTooltip;
         }
 
         protected override void SetUpAuxiliary()
         {
-            this.mDetail = $"[{this.mCharges}/{this.mCharges}]\t•\t[Weight: {this.mWeight}]\t•\t[Cast: {this.mCast}s]\t•\t[Recast: {this.mRecast}]";
+            this.mDetail = $"[{this.mCharges}/{this.mCharges}]\t•\t[重量：{this.mWeight}]\t•\t[詠唱：{this.mCast}秒]\t•\t[復唱：{this.mRecast}秒]";
             this.mDescription = $"{this.mDescription_full}";
             this.mIGMarkup = new GUI.IGMarkup.IGMarkup(this.mDescription_full);
         }

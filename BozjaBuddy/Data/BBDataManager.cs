@@ -8,7 +8,6 @@ using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Lumina.Excel.Sheets;
-using BozjaBuddy.Data.Alarm;
 using System.Linq;
 using ImGuiScene;
 using Dalamud.Interface.Internal;
@@ -19,18 +18,6 @@ namespace BozjaBuddy.Data
 {
     public class BBDataManager : IDisposable
     {
-        private const int kFateTableUpdateInterval = 1;
-        private static DateTime kFateTableLastUpdate = DateTime.MinValue;
-        private static HashSet<int> kAllowedQuest = new();
-        private static HashSet<int> kAllowedQuestGenre = new()
-        {
-            90,      // Resistance weapons
-            21,      // Return to Ivalice
-            8,       // ShB
-            9,       // ShB post 1
-            10       // ShB post 2
-        };
-
         private Plugin mPlugin;
         private string mCsLostAction;
         public Dictionary<int, GeneralObject> mGeneralObjects;
@@ -39,11 +26,7 @@ namespace BozjaBuddy.Data
         public Dictionary<int, Fate> mFates;
         public Dictionary<int, Mob> mMobs;
         public Dictionary<int, Vendor> mVendors;
-        public Dictionary<int, Loadout> mLoadouts;
-        public Dictionary<int, Loadout> mLoadoutsPreset;
         public Dictionary<int, FieldNote> mFieldNotes;
-        public Dictionary<int, Quest> mQuests;
-        public Dictionary<int, QuestChain> mQuestChains;
         private Dictionary<int, Item> mItems;
         public Lumina.Excel.ExcelSheet<Lumina.Excel.Sheets.Action>? mSheetAction;
         public Lumina.Excel.ExcelSheet<Lumina.Excel.Sheets.Item>? mSheetItem;
@@ -61,11 +44,7 @@ namespace BozjaBuddy.Data
             this.mFates = new Dictionary<int, Fate>();
             this.mMobs = new Dictionary<int, Mob>();
             this.mVendors = new Dictionary<int, Vendor>();
-            this.mLoadouts = new Dictionary<int, Loadout>();
             this.mFieldNotes = new Dictionary<int, FieldNote>();
-            this.mLoadoutsPreset = new Dictionary<int, Loadout>();
-            this.mQuests = new();
-            this.mQuestChains = new();
             this.mGeneralObjects = new Dictionary<int, GeneralObject>();
             this.mItems = new();
 
@@ -89,44 +68,9 @@ namespace BozjaBuddy.Data
                 this.DataSetUpMob(tCommand);
                 this.DataSetUpVendor(tCommand);
                 this.DataSetUpFieldNote(tCommand);
-                this.DataSetUpQuest(tCommand);
-                this.DataSetupQuestChain(tCommand);
             }
-            if (this.mQuests != null)
-            {
-                foreach (var q in this.mQuests)
-                {
-                    if (q.Value.mLumina.JournalGenre.IsValid
-                        && q.Value.mLumina.JournalGenre.Value.RowId != 76) continue;
-                    string temp = string.Join(
-                            ", ",
-                            q.Value.mNextQuestIds.Select(o => this.mQuests.TryGetValue(o, out Quest? tQuest) ? tQuest.mName : "")
-                        ); ;
-                    //PluginLog.LogDebug($"> BBDM: Loaded quest id={q.Value.mId} --- {q.Value.mName} ------> ({String.Join(", ", q.Value.mNextQuestIds)}) --- {temp}");
-                }
-            }
-
-            // json
-            LoadoutListJson? tRawLoadouts = this.mPlugin.Configuration.UserLoadouts;
-            if (tRawLoadouts != null)
-            {
-                foreach (LoadoutJson iLoadout in tRawLoadouts.mLoadouts)
-                {
-                    this.mLoadouts[iLoadout.mId] = new Loadout(this.mPlugin, iLoadout);
-                }
-            }
-            LoadoutListJson? tRawLoadoutsPreset = JsonSerializer.Deserialize<LoadoutListJson>(
-                        File.ReadAllText(this.mPlugin.DATA_PATHS["loadout_preset.json"])
-                    );
-            if (tRawLoadoutsPreset != null)
-            {
-                foreach (LoadoutJson iLoadout in tRawLoadoutsPreset.mLoadouts)
-                {
-                    this.mLoadoutsPreset[iLoadout.mId] = new Loadout(this.mPlugin, iLoadout);
-                }
-            }
-
             // lumina 2
+            this.ApplyLiveNames();
             this.SetUpGeneralObjects();
             this.SetUpAuxiliary();
 
@@ -360,50 +304,30 @@ namespace BozjaBuddy.Data
                 tReader.Close();
             }
         }
-        private void DataSetUpQuest(SQLiteCommand pCommand)
+
+        /// <summary>
+        /// Swap English action-name tokens inside community blurbs for the live Lumina name.
+        /// </summary>
+        private void ApplyLiveNames()
         {
-            if (this.mSheetQuest == null) return;
-
-            HashSet<Tuple<int, int>>? tLinkers = new();
-            // Get selected quests
-            HashSet<Lumina.Excel.Sheets.Quest> tQuests = this.mSheetQuest.Where(
-                                                                                        i => i.Expansion.RowId == 3       // ShB
-                                                                                            || (i.JournalGenre.IsValid
-                                                                                                && BBDataManager.kAllowedQuestGenre.Contains((int)i.JournalGenre.RowId))
-                                                                                        )
-                                                                                    .Select(o => o)
-                                                                                    .ToHashSet();
-            // Init base lumina
-            foreach (var q in tQuests)
+            var pairs = this.mLostActions.Values
+                .Where(a => !string.IsNullOrEmpty(a.mNameEn) && a.mNameEn != a.mName)
+                .OrderByDescending(a => a.mNameEn.Length)
+                .ToList();
+            if (pairs.Count == 0) return;
+            string Swap(string s)
             {
-                this.mQuests.TryAdd((int)q.RowId, new Quest(this.mPlugin, q, ref tLinkers));
+                foreach (var a in pairs) s = s.Replace(a.mNameEn, a.mName);
+                return s;
             }
-            // Build links
-            foreach (var qq in this.mQuests)
+            foreach (var a in this.mLostActions.Values)
             {
-                Quest.LinkNextQuest(qq.Value, ref tLinkers);
-            }
-            // Load data from db
-            //pCommand.CommandText = "SELECT * FROM Quest;";
-            //SQLiteDataReader tReader = pCommand.ExecuteReader();
-
-            //while (tReader.Read())
-            //{
-            //    if (!this.mQuests.TryGetValue((int)(long)tReader["id"], out Quest? tQuest)
-            //        && tQuest == null)
-            //        continue;
-            //    tQuest.SetUpDb(tReader);
-            //}
-            //tReader.Close();
-        }
-        private void DataSetupQuestChain(SQLiteCommand pCommand)
-        {
-            DbLoader<QuestChain>(out this.mQuestChains, pCommand, "SELECT * FROM QuestChain;", (p, t) => new QuestChain(p, t));
-
-            foreach (var iChain in this.mQuestChains.Values)
-            {
-                if (iChain == null) continue;
-                iChain.SetUpAfterDbLoad(ref this.mQuests);
+                a.mDescription_semi = Swap(a.mDescription_semi);
+                a.mDescription_full = Swap(a.mDescription_full);
+                a.mUsage = Swap(a.mUsage);
+                a.mDescription = a.mDescription_full;
+                a.mIGMarkup = new GUI.IGMarkup.IGMarkup(a.mDescription_full);
+                a.ResetReprUiTooltip();
             }
         }
 
@@ -419,14 +343,8 @@ namespace BozjaBuddy.Data
                 this.mGeneralObjects[this.mLostActions[id].GetGenId()] = this.mLostActions[id];
             foreach (int id in this.mVendors.Keys)
                 this.mGeneralObjects[this.mVendors[id].GetGenId()] = this.mVendors[id];
-            foreach (int id in this.mLoadouts.Keys)
-                this.mGeneralObjects[this.mLoadouts[id].GetGenId()] = this.mLoadouts[id];
             foreach (int id in this.mFieldNotes.Keys)
                 this.mGeneralObjects[this.mFieldNotes[id].GetGenId()] = this.mFieldNotes[id];
-            foreach (int id in this.mQuests.Keys)
-                this.mGeneralObjects[this.mQuests[id].GetGenId()] = this.mQuests[id];
-            foreach (int id in this.mQuestChains.Keys)
-                this.mGeneralObjects[this.mQuestChains[id].GetGenId()] = this.mQuestChains[id];
         }
 
         public void SetUpAuxiliary()
@@ -441,14 +359,8 @@ namespace BozjaBuddy.Data
                 AuxiliaryViewerSection.BindToGenObj(this.mPlugin, this.mLostActions[id].GetGenId());
             foreach (int id in this.mVendors.Keys)
                 AuxiliaryViewerSection.BindToGenObj(this.mPlugin, this.mVendors[id].GetGenId());
-            foreach (int id in this.mLoadouts.Keys)
-                AuxiliaryViewerSection.BindToGenObj(this.mPlugin, this.mLoadouts[id].GetGenId());
             foreach (int id in this.mFieldNotes.Keys)
                 AuxiliaryViewerSection.BindToGenObj(this.mPlugin, this.mFieldNotes[id].GetGenId());
-            foreach (int id in this.mQuests.Keys)
-                AuxiliaryViewerSection.BindToGenObj(this.mPlugin, this.mQuests[id].GetGenId());
-            foreach (int id in this.mQuestChains.Keys)
-                AuxiliaryViewerSection.BindToGenObj(this.mPlugin, this.mQuestChains[id].GetGenId());
         }
         public void SetUpUiMap(List<UIMap_MycItemBoxRow> tUIMap_MycInfo)
         {
@@ -471,39 +383,6 @@ namespace BozjaBuddy.Data
                     }
                 }
             }
-        }
-        public LoadoutListJson SerializePseudo_Loadouts()
-        {
-            LoadoutListJson tLoadoutJsons = new LoadoutListJson();
-            foreach (Loadout iLoadout in this.mLoadouts.Values)
-            {
-                tLoadoutJsons.mLoadouts.Add(new LoadoutJson(iLoadout));
-            }
-            return tLoadoutJsons;
-        }
-        public void SaveLoadouts()
-        {
-            //string tJson = JsonSerializer.Serialize(SerializePseudo_Loadouts(), new JsonSerializerOptions { WriteIndented = true});
-            //File.WriteAllText(this.mPlugin.DATA_PATHS["loadout.json"], tJson);
-            this.mPlugin.Configuration.UserLoadouts = this.SerializePseudo_Loadouts();
-            this.mPlugin.Configuration.Save();
-        }
-        public void ReloadLoadoutsPreset()
-        {
-            foreach (Loadout iLoadoutPreset in this.mLoadoutsPreset.Values)
-            {
-                if (this.mLoadouts.ContainsKey(iLoadoutPreset.mId))
-                {
-                    this.mLoadouts[iLoadoutPreset.mId] = iLoadoutPreset.DeepCopy();
-                    this.mPlugin.PLog.Debug($"Updating existed loadout! ({this.mLoadouts[iLoadoutPreset.mId].mName})");
-                }
-                else
-                {
-                    BBDataManager.DynamicAddGeneralObject(this.mPlugin, iLoadoutPreset.DeepCopy(), this.mLoadouts);
-                    this.mPlugin.PLog.Debug($"Creating new loadout! ({iLoadoutPreset.mId})");
-                }
-            }
-            this.SaveLoadouts();
         }
         /// <summary> 
         /// Get BozjaBuddy Item. 
@@ -549,11 +428,6 @@ namespace BozjaBuddy.Data
             pPlugin.mBBDataManager.mGeneralObjects[pGenObj.GetGenId()] = pGenObj;
             AuxiliaryViewerSection.BindToGenObj(pPlugin, pGenObj.GetGenId());
             // Write to disc
-            if (typeof(T) == typeof(Loadout))
-            {
-                pPlugin.mBBDataManager.SaveLoadouts();
-                AuxiliaryViewerSection.mTenpLoadout = null;
-            }
             AuxiliaryViewerSection.mIsRefreshRequired = true;
         }
         /// <summary>
@@ -568,100 +442,16 @@ namespace BozjaBuddy.Data
             AuxiliaryViewerSection.UnbindFromGenObj(pPlugin, pGenObj.GetGenId());
             AuxiliaryViewerSection.mTabGenIdsToDraw.Remove(pGenObj.GetGenId());
             AuxiliaryViewerSection.mIsRefreshRequired = true;
-            // Write to disc
-            if (typeof(T) == typeof(Loadout))
-            {
-                pPlugin.mBBDataManager.SaveLoadouts();
-                AuxiliaryViewerSection.mTenpLoadout = null;
-            }
         }
 
-        public unsafe static MycDynamicEventData* GetMycDynamicEventArray()
-        {
-            // Get MycBattleAreaAgent, if possible
-            AgentMycBattleAreaInfo* tAgentMycBattleInfoInfo = BBDataManager.GetAgentMycBattleAreaInfo();
-            if (tAgentMycBattleInfoInfo == null) { return null; }
-            MycDynamicEventData* tMycDynamicEventArray = tAgentMycBattleInfoInfo->MycDynamicEventData;
-            return tMycDynamicEventArray;
-        }
-        public unsafe static AgentMycBattleAreaInfo* GetAgentMycBattleAreaInfo()
-        {
-            return (AgentMycBattleAreaInfo*)Framework.Instance()
-                                                            ->GetUIModule()
-                                                            ->GetAgentModule()
-                                                            ->GetAgentByInternalId(AgentId.MycBattleAreaInfo);
-        }
         public unsafe static AgentMycItemBox* GetAgentMycItemBox()
         {
             return (AgentMycItemBox*)Framework.Instance()
-                                                            ->GetUIModule()
-                                                            ->GetAgentModule()
-                                                            ->GetAgentByInternalId(AgentId.MycItemBox);
-        }
-        /// <summary>
-        /// Update the status of all FateCE in FateTable. 
-        /// Returning false means MycBattleAreaAgent was not active.
-        /// </summary>
-        public unsafe static bool UpdateAllFateStatus(Plugin pPlugin)
-        {
-            bool tIsAgentActive = true;
-            // Get MycBattleAreaAgent, if possible
-            MycDynamicEventData* tMycDynamicEventArray = BBDataManager.GetMycDynamicEventArray();
-            if (tMycDynamicEventArray == null) tIsAgentActive = false;
-
-            // Check update interval, AFTER checkcing if the agent is active
-            if ((DateTime.Now - BBDataManager.kFateTableLastUpdate).TotalSeconds < BBDataManager.kFateTableUpdateInterval)
-            {
-                return tIsAgentActive;
-            }
-            else BBDataManager.kFateTableLastUpdate = DateTime.Now;
-
-            Span<MycDynamicEvent> tDeSpan = tIsAgentActive
-                                    ? new Span<MycDynamicEvent>(tMycDynamicEventArray->Array.GetPointer(0), tMycDynamicEventArray->Count)
-                                    : Span<MycDynamicEvent>.Empty;
-
-            //PluginLog.LogDebug(String.Format("> IsAgentActive={0}", tIsAgentActive));
-
-            // Reset all mCsFate to null
-            foreach (int iID in pPlugin.mBBDataManager.mFates.Keys)
-            {
-                pPlugin.mBBDataManager.mFates[iID].mCSFate = null;
-                // if MycAgentInfo is not opened, all DE is null
-                if (!tIsAgentActive)
-                {
-                    pPlugin.mBBDataManager.mFates[iID].mDynamicEvent = null;
-                    continue;
-                }
-                // mDE
-                foreach (MycDynamicEvent iDe in tDeSpan)
-                {
-                    //PluginLog.LogDebug(String.Format("> DE's id={0} timeLeft={1} participantCount={2} state={3} name={4}", iDe.Id, iDe.TimeLeft, iDe.ParticipantCount, iDe.State.ToString(), iDe.Name.ToString()));
-                    if (iID == iDe.Id)
-                    {
-                        pPlugin.mBBDataManager.mFates[iID].mDynamicEvent = iDe;
-                        AlarmManager.NotifyListener("fatece", new MsgAlarmFateCe(pPlugin, iID.ToString(), AlarmFateCe.ExtraCheckOption.None));
-                        break;
-                    }
-                    AlarmManager.RemoveMsg("fatece", new MsgAlarmFateCe(pPlugin, iID.ToString(), AlarmFateCe.ExtraCheckOption.None));
-                    pPlugin.mBBDataManager.mFates[iID].mDynamicEvent = null;
-                    pPlugin.mBBDataManager.mFates[iDe.Id].mLastActive = DateTime.Now;
-                }
-            }
-
-            for (int ii = 0; ii < pPlugin.FateTable.Length; ii++)      // if it is null, update if available
-            {
-                if (pPlugin.FateTable[ii] is null) { continue; }
-                // mCsFate
-                int tID = pPlugin.FateTable[ii]!.FateId;
-                if (!pPlugin.mBBDataManager.mFates.ContainsKey(tID)) continue;
-                
-                pPlugin.mBBDataManager.mFates[tID].mCSFate = pPlugin.FateTable[ii];
-                pPlugin.mBBDataManager.mFates[tID].mLastActive = DateTime.Now;
-            }
-            return tIsAgentActive;
+                ->GetUIModule()
+                ->GetAgentModule()
+                ->GetAgentByInternalId(AgentId.MycItemBox);
         }
     }
-
 
     public enum LostActionType
     {
@@ -682,99 +472,6 @@ namespace BozjaBuddy.Data
         DutyAsAssigned = 2415
     }
 
-    public class LoadoutListJson
-    {
-        public List<LoadoutJson> mLoadouts { get; set; } = new List<LoadoutJson>();
-    }
-    public class LoadoutJson
-    {
-        public string _mName = "New loadout";          // these public fields are specifically for ImGui.TextInput()
-        public string _mDescription = "new description";
-        public string _mGroup = "group";
-        public RoleFlag _mRole = new RoleFlag(0);
-        public int _mWeight = 0;
-        public int mId { get; set; } = -1;  // these properties are specifically for json stuff
-        public string mName 
-        {
-            get
-            {
-                return _mName;
-            }
-            set
-            {
-                _mName = value;
-            }
-        }
-        public string mDescription
-        {
-            get
-            {
-                return _mDescription;
-            }
-            set
-            {
-                _mDescription = value;
-            }
-        }
-        public string mGroup
-        {
-            get
-            {
-                return _mGroup;
-            }
-            set
-            {
-                _mGroup = value;
-            }
-        }
-        public int mRoleInt
-        {
-            get
-            {
-                return RoleFlag.FlagToInt(_mRole.mRoleFlagBit);
-            }
-            set
-            {
-                _mRole.SetRoleFlagBit(RoleFlag.IntToFlag(value));
-            }
-        }
-        public int mWeight
-        {
-            get
-            {
-                return _mWeight;
-            }
-            set
-            {
-                _mWeight = value;
-            }
-        }
-        public Dictionary<int, int> mActionIds { get; set; } = new Dictionary<int, int>();
-
-        public LoadoutJson()
-        {
-            // Specifically for json stuff
-        }
-        public LoadoutJson(Loadout pLoadout, bool pIsNew = false)
-        {
-            this.mId = pIsNew ? -1 : pLoadout.mId;
-            this.mName = pLoadout.mName;
-            this.mDescription = pLoadout.mDescription;
-            this.mGroup = pLoadout.mGroup;
-            this.mWeight = pLoadout.mWeight;
-            this.mActionIds = new Dictionary<int, int>(pLoadout.mActionIds);
-            this.mRoleInt = RoleFlag.FlagToInt(pLoadout.mRole.mRoleFlagBit);
-        }
-        public void RecalculateWeight(Plugin pPlugin)
-        {
-            this.mWeight = 0;
-            foreach (int iActionId in this.mActionIds.Keys)
-            {
-                this.mWeight += pPlugin.mBBDataManager.mLostActions[iActionId].mWeight * this.mActionIds[iActionId];
-            }
-        }
-    }
-    
     public class UIMap_MycItemBoxRow
     {
         public int order { get; set; }

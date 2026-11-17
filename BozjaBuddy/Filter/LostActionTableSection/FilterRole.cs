@@ -6,7 +6,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterRole : Filter
     {
-        public override string mFilterName { get; set; } = "role";
+        public override string mFilterName { get; set; } = "職能";
         private new RoleFlag mCurrValue = default!;
         public bool mIsCompact = true;
 

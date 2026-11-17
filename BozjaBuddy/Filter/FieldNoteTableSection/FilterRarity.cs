@@ -10,7 +10,7 @@ namespace BozjaBuddy.Filter.FieldNoteTableSection
 {
     internal class FilterRarity : Filter
     {
-        public override string mFilterName { get; set; } = "rarity";
+        public override string mFilterName { get; set; } = "稀有度";
         public new int mCurrValue = 0;
 
         public FilterRarity() { }

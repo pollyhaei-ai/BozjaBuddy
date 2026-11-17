@@ -239,8 +239,8 @@ namespace BozjaBuddy.Utils
 
         public static Job? GetUserJob(Plugin pPlugin)
         {
-            if (pPlugin.ObjectTable.LocalPlayer == null) return null;
-            var tJob = pPlugin.ObjectTable.LocalPlayer!.ClassJob;
+            if (pPlugin.ClientState.LocalPlayer == null) return null;
+            var tJob = pPlugin.ClientState.LocalPlayer!.ClassJob;
             if (!tJob.IsValid || !Enum.IsDefined(typeof(Job), (int)tJob.RowId)) return null;
             return (Job)tJob.RowId switch
             {
@@ -258,8 +258,8 @@ namespace BozjaBuddy.Utils
         }
         public static BozjaBuddy.Data.Role? GetUserRole(Plugin pPlugin)
         {
-            if (pPlugin.ObjectTable.LocalPlayer == null) return null;
-            var tJob = pPlugin.ObjectTable.LocalPlayer!.ClassJob;
+            if (pPlugin.ClientState.LocalPlayer == null) return null;
+            var tJob = pPlugin.ClientState.LocalPlayer!.ClassJob;
             pPlugin.PLog.Debug($"role: {null}\tclientState: {tJob.Value.Name}");
             if (!tJob.IsValid) return null;
             BozjaBuddy.Data.Role tRole = BozjaBuddy.Data.Role.None;
@@ -271,7 +271,7 @@ namespace BozjaBuddy.Utils
                 4 => BozjaBuddy.Data.Role.Healer,
                 _ => ~tRole,
             };
-            pPlugin.PLog.Debug($"role: {tRole}\tclientState: {pPlugin.ObjectTable.LocalPlayer?.ClassJob}");
+            pPlugin.PLog.Debug($"role: {tRole}\tclientState: {pPlugin.ClientState.LocalPlayer?.ClassJob}");
             return tRole;
         }
         public static int? GetUserTerritoryAsId(Plugin pPlugin)
@@ -347,6 +347,29 @@ namespace BozjaBuddy.Utils
             RawEmotion = 33767,
 
             SaveThePrincess = 32855
+        }
+    }
+
+    /// <summary>Live sheet names. Empty results stay null so callers can keep a fallback.</summary>
+    public static class SheetNames
+    {
+        public static string? Action(Plugin p, uint id) => Text(p.DataManager.Excel.GetSheet<Lumina.Excel.Sheets.Action>()?.GetRowOrDefault(id)?.Name);
+        public static string? Item(Plugin p, uint id) => Text(p.DataManager.Excel.GetSheet<Lumina.Excel.Sheets.Item>()?.GetRowOrDefault(id)?.Name);
+        public static string? Quest(Plugin p, uint id) => Text(p.DataManager.Excel.GetSheet<Lumina.Excel.Sheets.Quest>()?.GetRowOrDefault(id)?.Name);
+
+        public static string Currency(Plugin p, Vendor.Currency currency)
+        {
+            if (currency == Vendor.Currency.Cluster)
+                return Item(p, (uint)Vendor.Currency.Cluster) ?? "戰勲簇";
+            if (currency == Vendor.Currency.Gil)
+                return "金幣";
+            return currency.ToString();
+        }
+
+        private static string? Text(object? name)
+        {
+            var s = name?.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s;
         }
     }
 

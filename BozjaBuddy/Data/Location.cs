@@ -111,17 +111,17 @@ namespace BozjaBuddy.Data
             switch (this.mAreaFlag)
             {
                 case Area.None: 
-                    if (this.mReprString == string.Empty) this.mReprString = "None"; break;
-                case Area.Bozja_Zone1: this.mReprString = "Bozja Zone 1"; break;
-                case Area.Bozja_Zone2: this.mReprString = "Bozja Zone 2"; break;
-                case Area.Bozja_Zone3: this.mReprString = "Bozja Zone 3"; break;
-                case Area.Zadnor_Zone1: this.mReprString = "Zadnor Zone 1"; break;
-                case Area.Zadnor_Zone2: this.mReprString = "Zadnor Zone 2"; break;
-                case Area.Zadnor_Zone3: this.mReprString = "Zadnor Zone 3"; break;
-                case Area.Castrum: this.mReprString = "Castrum Lacus Litore"; break;
-                case Area.Dalriada: this.mReprString = "The Dalriada"; break;
-                case Area.Delubrum: this.mReprString = "Delubrum Reginae"; break;
-                case Area.DelubrumSavage: this.mReprString = "Delubrum Reginae (Savage)"; break;
+                    if (this.mReprString == string.Empty) this.mReprString = "無"; break;
+                case Area.Bozja_Zone1: this.mReprString = "博茲雅前線・一區"; break;
+                case Area.Bozja_Zone2: this.mReprString = "博茲雅前線・二區"; break;
+                case Area.Bozja_Zone3: this.mReprString = "博茲雅前線・三區"; break;
+                case Area.Zadnor_Zone1: this.mReprString = "札杜諾爾高原・一區"; break;
+                case Area.Zadnor_Zone2: this.mReprString = "札杜諾爾高原・二區"; break;
+                case Area.Zadnor_Zone3: this.mReprString = "札杜諾爾高原・三區"; break;
+                case Area.Castrum: this.mReprString = "湖岸堡攻城戰"; break;
+                case Area.Dalriada: this.mReprString = "達利阿達攻城戰"; break;
+                case Area.Delubrum: this.mReprString = "女王古殿"; break;
+                case Area.DelubrumSavage: this.mReprString = "女王古殿零式"; break;
             }
         }
         private bool CheckIsInsideBox(double x, double y, double[] tBox)

@@ -4,7 +4,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterCast : Filter
     {
-        public override string mFilterName { get; set; } = "cast";
+        public override string mFilterName { get; set; } = "詠唱";
         private new int[] mCurrValue = default!;
 
         public FilterCast()

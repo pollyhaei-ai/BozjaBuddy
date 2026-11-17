@@ -35,9 +35,9 @@ namespace BozjaBuddy.Filter.FieldNoteTableSection
         {
             if (ImGui.Button(mCurrValue switch
                 {
-                    "all"       => "  ALL  ",
-                    "owned"     => " OWN ",
-                    "missing"   => "\t~\t",
+                    "all"       => " 全部 ",
+                    "owned"     => " 已有 ",
+                    "missing"   => " 缺少 ",
                     _ => "-----"
                 }
             ))
@@ -55,9 +55,9 @@ namespace BozjaBuddy.Filter.FieldNoteTableSection
                 UtilsGUI.SetTooltipForLastItem(
                     mCurrValue switch
                     {
-                        "all"       => "Visible: all",
-                        "owned"     => "Visible: obtained notes",
-                        "missing"   => "Visible: missing notes",
+                        "all"       => "顯示全部",
+                        "owned"     => "只顯示已取得",
+                        "missing"   => "只顯示未取得",
                         _ => "----"
                     }
                     );

@@ -85,7 +85,7 @@ namespace BozjaBuddy.GUI.GUIExtension
             }
             else
             {
-                UtilsGUI.SetTooltipForLastItem("UI Assist configs for Lost Find Cache window\n(also found in: Config > UI Assist > [B])");
+                UtilsGUI.SetTooltipForLastItem("失傳技能持有欄的覆蓋設定\n（也在：設定 > 持有欄覆蓋）");
             }
             if (ImGui.BeginPopup("pu"))
             {
@@ -96,9 +96,9 @@ namespace BozjaBuddy.GUI.GUIExtension
             ImGui.SetCursorScreenPos(tOrigin + new Vector2(5f, 0));
             if (ImGuiComponents.IconButton(FontAwesomeIcon.ArrowUpRightFromSquare))
             {
-                Plugin.GetWindow("Bozja Buddy")!.IsOpen = !(Plugin.GetWindow("Bozja Buddy")!.IsOpen);
+                Plugin.GetWindow(Plugin.MainWindowTitle)!.IsOpen = !(Plugin.GetWindow(Plugin.MainWindowTitle)!.IsOpen);
             }
-            UtilsGUI.SetTooltipForLastItem("Open Bozja Buddy window");
+            UtilsGUI.SetTooltipForLastItem("開啟博茲雅助手");
             // Disable UI Assist for MycItemBox and MycItemBagTrade
             ImGui.SameLine();
             if (ImGuiComponents.IconButton(
@@ -111,7 +111,7 @@ namespace BozjaBuddy.GUI.GUIExtension
                 this.mPlugin.Configuration.mGuiAssistConfig.itemBox.isDisabled_All = !this.mPlugin.Configuration.mGuiAssistConfig.itemBox.isDisabled_All;
                 this.mPlugin.Configuration.Save();
             }
-            UtilsGUI.SetTooltipForLastItem("Enable / Disable most UI features for this section.");
+            UtilsGUI.SetTooltipForLastItem("開啟或關閉這個視窗的大部分覆蓋功能。");
             ImGui.PopStyleVar();
 
             if (this.mPlugin.Configuration.mGuiAssistConfig.itemBox.isDisabled_All)
@@ -146,7 +146,7 @@ namespace BozjaBuddy.GUI.GUIExtension
                 ImGui.SameLine();
                 if (tScale > 0.8)
                 {
-                    ImGui.Text("Weight: ");
+                    ImGui.Text("重量：");
                     ImGui.SameLine();
                 }
                 ImGui.PushItemWidth(90 * tScale);
@@ -162,7 +162,7 @@ namespace BozjaBuddy.GUI.GUIExtension
                     this.mFilterFragment.ClearInputValue();
                     this.mFilterRole.ClearInputValue();
                 }
-                UtilsGUI.SetTooltipForLastItem("Clear all fields.");
+                UtilsGUI.SetTooltipForLastItem("清除所有篩選。");
             }
 
             ImGui.PopStyleColor();

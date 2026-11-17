@@ -4,7 +4,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterRecast : Filter
     {
-        public override string mFilterName { get; set; } = "recast";
+        public override string mFilterName { get; set; } = "復唱";
         private new int[] mCurrValue;
 
         public FilterRecast()

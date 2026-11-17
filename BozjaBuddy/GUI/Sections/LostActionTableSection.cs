@@ -188,8 +188,8 @@ namespace BozjaBuddy.GUI.Sections
                     {
                         case 0:
                             UtilsGUI.InputPayload tInputPayload = new();
-                            if (tIconWrap != null
-                                && UtilsGUI.SelectableLink_Image(
+                            if (tIconWrap != null)
+                                UtilsGUI.SelectableLink_Image(
                                         this.mPlugin,
                                         tLostAction.GetGenId(),
                                         tIconWrap,
@@ -198,19 +198,8 @@ namespace BozjaBuddy.GUI.Sections
                                         pImageScaling: this.mIsCompactModeActive
                                                        ? Utils.Utils.GetIconResizeRatio(this.mPlugin, tIconWrap.Height)
                                                        : 0.75f,
-                                        pInputPayload: tInputPayload,
-                                        pAdditionalHoverText: AuxiliaryViewerSection.mTenpLoadout != null
-                                                              ? $"[Shift+LMB/RMB] Add/remove from loadout\n"
-                                                              : ""
-                            )
-                                && tInputPayload.mIsKeyShift)
-                            {
-                                AuxiliaryViewerSection.GUILoadoutEditAdjuster_Incre(this.mPlugin, tLostAction.mId);
-                            }
-                            else if (tIconWrap != null && tInputPayload.mIsHovered && tInputPayload.mIsMouseRmb && tInputPayload.mIsKeyShift)
-                            {
-                                AuxiliaryViewerSection.GUILoadoutEditAdjuster_Decre(this.mPlugin, tLostAction.mId);
-                            }
+                                        pInputPayload: tInputPayload
+                            );
                             break;
                         case 1:
                             UtilsGUI.SelectableLink_WithPopup(mPlugin, tLostAction.mName, tLostAction.GetGenId(), pIsShowingCacheAmount: true);
@@ -230,7 +219,7 @@ namespace BozjaBuddy.GUI.Sections
                         case 4:
                             if (this.mIsCompactModeActive)
                             {
-                                ImGui.Text("<hover to view>");
+                                ImGui.Text("懸停查看");
                                 if (ImGui.IsItemHovered())
                                     ImGui.SetTooltip(tLostAction.mDescription_semi);
                             }
@@ -281,14 +270,6 @@ namespace BozjaBuddy.GUI.Sections
                 }
                 ImGui.EndTable();
             }
-            if (AuxiliaryViewerSection.mTenpLoadout != null)
-            {
-                ImGui.GetWindowDrawList().AddText(
-                        tScreenAnchor + new Vector2(420, 150),
-                        ImGui.ColorConvertFloat4ToU32(UtilsGUI.AdjustTransparency(UtilsGUI.Colors.NormalText_Orange, 0.6f)),
-                        "[Shift+LMB] Add to loadout\n[Shift+RMB] Remove from loadout"
-                    );
-            }
         }
         private void DrawGridCell(int pId, float pCellWidth)
         {
@@ -306,8 +287,8 @@ namespace BozjaBuddy.GUI.Sections
             float tScaling = 1;
             UtilsGUI.InputPayload tInputPayload = new();
             if (tIconWrap != null) tScaling = (pCellWidth - 1) / tIconWrap.Width;       // account for frame padding 
-            if (tIconWrap != null
-                && UtilsGUI.SelectableLink_Image(
+            if (tIconWrap != null)
+                UtilsGUI.SelectableLink_Image(
                         this.mPlugin,
                         tLostAction.GetGenId(),
                         tIconWrap,
@@ -319,19 +300,8 @@ namespace BozjaBuddy.GUI.Sections
                                                 ? null
                                                 : new Vector4(1, 1, 1, 0.25f)
                                             : new Vector4(1, 1, 1, 0),
-                        pInputPayload: tInputPayload,
-                        pAdditionalHoverText: AuxiliaryViewerSection.mTenpLoadout != null
-                                              ? $"[Shift+LMB/RMB] Add/remove from loadout\n"
-                                              : ""
-                        )
-                && tInputPayload.mIsKeyShift)
-            {
-                AuxiliaryViewerSection.GUILoadoutEditAdjuster_Incre(this.mPlugin, tLostAction.mId);
-            }
-            else if (tIconWrap != null && tInputPayload.mIsHovered && tInputPayload.mIsMouseRmb && tInputPayload.mIsKeyShift)
-            {
-                AuxiliaryViewerSection.GUILoadoutEditAdjuster_Decre(this.mPlugin, tLostAction.mId);
-            }
+                        pInputPayload: tInputPayload
+                        );
             // Cache amount
             if (this.mPlugin.Configuration._userCacheData.TryGetValue(pId, out int tAmount))
             {
@@ -348,51 +318,16 @@ namespace BozjaBuddy.GUI.Sections
                         ImGui.ColorConvertFloat4ToU32(UtilsGUI.Colors.NormalText_Orange),
                         $"{tAmount}"
                     );
-                // Action Alert
-                if (this.mPlugin.Configuration.mIsAroVisible_LostActionTableSection
-                    && CharStatsWindow.CheckActionAlert(this.mPlugin, pId))
-                {
-                    tDrawList.AddCircleFilled(
-                            tScreenAnchor + new Vector2(2, -pCellWidth + 2),
-                            3.9f,
-                            ImGui.ColorConvertFloat4ToU32(UtilsGUI.AdjustTransparency(UtilsGUI.Colors.MycItemBoxOverlay_Red, 0.8f))
-                        );
-                }
             }
 
             ImGui.PopStyleVar();
         }
         private void DrawOptionBar()
         {
-            if (this.mPlugin.Configuration.mIsInGridMode_LostActionTableSection)
-            {
-                // ARO config
-                if (ImGuiComponents.IconButton(Dalamud.Interface.FontAwesomeIcon.SlidersH))
-                {
-                    ImGui.OpenPopup("##alertConfig");
-                }
-                else { UtilsGUI.SetTooltipForLastItem("Configs for Action-Running-out Alert (also found in Config > Misc > [A])"); }
-                if (ImGui.IsPopupOpen("##alertConfig")) ImGui.SetNextWindowSize(new Vector2(550, 450));
-                if (ImGui.BeginPopup("##alertConfig"))
-                {
-                    ConfigWindow.Draw_CacheAlertConfig(this.mPlugin, this.mPlugin.Configuration, this.mFilter_CacheAlert1, this.mFilter_CacheAlert2);
-                    ImGui.EndPopup();
-                }
-                // ARO toggle
-                ImGui.SameLine();
-                ImGuiComponents.ToggleButton("##togAro", ref this.mPlugin.Configuration.mIsAroVisible_LostActionTableSection);
-                ImGui.SameLine();
-                UtilsGUI.TextWithHelpMarker(
-                    "Action-running-out Alert", 
-                    "The below replicates player's Lost find Cache.\n\n- Filterable.\n- The number represents the amount player possesses.\n- The red dot (Action-running-out Alert) notifies actions that are running low. The alert threshold is modifiable, using the outmost left button.\n- Pressing [Shift + LMB] on an action while in Custom loadout edit mode will add that action to the loadout being edited.",
-                    UtilsGUI.Colors.BackgroundText_Grey);
-                ImGui.SameLine();
-            }
-
             if (!this.mPlugin.Configuration.mIsInGridMode_LostActionTableSection)
             {
-                AuxiliaryViewerSection.GUIAlignRight("Compact mode      [GRID]");
-                ImGui.TextColored(UtilsGUI.Colors.BackgroundText_Grey, "Compact mode");
+                AuxiliaryViewerSection.GUIAlignRight("精簡模式      [格狀]");
+                ImGui.TextColored(UtilsGUI.Colors.BackgroundText_Grey, "精簡模式");
                 ImGui.SameLine();
                 ImGuiComponents.ToggleButton("comTog", ref this.mIsCompactModeActive);
                 ImGui.SameLine();
@@ -410,7 +345,7 @@ namespace BozjaBuddy.GUI.Sections
             }
             else
             {
-                UtilsGUI.SetTooltipForLastItem($"Current view mode: {(this.mPlugin.Configuration.mIsInGridMode_LostActionTableSection ? "GRID" : "LIST")}");
+                UtilsGUI.SetTooltipForLastItem($"目前檢視：{(this.mPlugin.Configuration.mIsInGridMode_LostActionTableSection ? "格狀" : "列表")}");
             }
         }
         private void CalcTableHeight() => this.TABLE_SIZE_Y = this.mPlugin.TEXT_BASE_HEIGHT * (15 + (this.mPlugin.Configuration.mIsInGridMode_LostActionTableSection

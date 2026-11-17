@@ -16,7 +16,7 @@ namespace BozjaBuddy.GUI.Tabs
 
         public FieldNoteTab(Plugin pPlugin)
         {
-            this.mName = "Field Note";
+            this.mName = "戰地筆記";
             this.mPlugin = pPlugin;
             mSortedSections = new Dictionary<int, Section>() {
                 { 0, new FieldNoteTableSection(this.mPlugin) },

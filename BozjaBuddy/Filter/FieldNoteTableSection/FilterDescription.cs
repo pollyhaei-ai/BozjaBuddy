@@ -4,7 +4,7 @@ namespace BozjaBuddy.Filter.FieldNoteTableSection
 {
     internal class FilterDescription : Filter
     {
-        public override string mFilterName { get; set; } = "description";
+        public override string mFilterName { get; set; } = "說明";
 
         public FilterDescription() { }
 

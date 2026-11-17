@@ -8,7 +8,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterFragment : Filter
     {
-        public override string mFilterName { get; set; } = "fragment";
+        public override string mFilterName { get; set; } = "碎片";
         protected Dictionary<int, Tuple<string, bool>?> _cacheRes = new();
 
         public FilterFragment() { }

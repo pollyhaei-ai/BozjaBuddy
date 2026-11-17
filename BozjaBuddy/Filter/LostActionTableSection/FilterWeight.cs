@@ -7,7 +7,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterWeight : Filter
     {
-        public override string mFilterName { get; set; } = "weight";
+        public override string mFilterName { get; set; } = "重量";
         public bool mIsCompact = true;
         private new int[] mLastValue = default!;
         private new int[] mCurrValue = default!;

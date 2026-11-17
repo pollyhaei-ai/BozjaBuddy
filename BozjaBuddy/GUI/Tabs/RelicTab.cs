@@ -15,7 +15,7 @@ namespace BozjaBuddy.GUI.Tabs
         protected override Plugin mPlugin { get; set; }
         public RelicTab(Plugin pPlugin)
         {
-            this.mName = "Relic";
+            this.mName = "義軍武器";
             this.mPlugin = pPlugin;
             this.mSortedSections = new Dictionary<int, Section>() {
                 { 0, new RelicSection(this.mPlugin) },

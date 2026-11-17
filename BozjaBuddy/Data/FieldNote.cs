@@ -29,8 +29,11 @@ namespace BozjaBuddy.Data
             var tSheet = this.mPlugin.DataManager.Excel.GetSheet<Lumina.Excel.Sheets.MYCWarResultNotebook>();
             if (tSheet != null)
             {
-                var tLuminaObj = tSheet.FirstOrDefault(o => o.RowId == mId);
+                var tLuminaObj = tSheet.FirstOrDefault(o => o.RowId == (uint)mId);
                 mNumber = (int)tLuminaObj.Number;
+                var liveName = tLuminaObj.Name.ToString();
+                if (!string.IsNullOrWhiteSpace(liveName) && tLuminaObj.RowId == (uint)mId)
+                    mName = liveName;
             }
 
             this.mTabColor = UtilsGUI.Colors.GenObj_BrownFieldNote;
@@ -45,10 +48,10 @@ namespace BozjaBuddy.Data
                 ", ",
                 this.mLinkFates.Select(o => this.mPlugin.mBBDataManager.mFates.ContainsKey(o)
                                             ? this.mPlugin.mBBDataManager.mFates[o].mName + $" --- ({this.mPlugin.mBBDataManager.mFates[o].mLocation?.ToStringFull()})"
-                                            : "unknown")
+                                            : "不明")
                                    .ToList()
                 );
-            return $"[{this.mName}] • [Rarity: {this.mRarity}] • [{this.mDescription}] • [FATE: {tFateText}]";
+            return $"[{this.mName}] • [稀有度：{this.mRarity}] • [{this.mDescription}] • [來源：{tFateText}]";
         }
         protected override string GenReprUiTooltip()
         {
@@ -56,19 +59,19 @@ namespace BozjaBuddy.Data
                 "\n\t\t\t    ",
                 this.mLinkFates.Select(o => this.mPlugin.mBBDataManager.mFates.ContainsKey(o)
                                             ? this.mPlugin.mBBDataManager.mFates[o].mName + $" --- ({this.mPlugin.mBBDataManager.mFates[o].mLocation?.ToStringFull()})"
-                                            : "unknown")
+                                            : "不明")
                                    .ToList()
                 );
 
-            this.mUiTooltip = $"Name:\t{this.mName}"
-                            + $"\nDesc:  \t{this.mDescription}"
-                            + $"\nFATE:  \t{tFateText}";
+            this.mUiTooltip = $"名稱：\t{this.mName}"
+                            + $"\n說明：\t{this.mDescription}"
+                            + $"\n來源：\t{tFateText}";
             return this.mUiTooltip;
         }
 
         protected override void SetUpAuxiliary()
         {
-            this.mDetail = $"Rarity: {this.mRarity}";
+            this.mDetail = $"稀有度：{this.mRarity}";
         }
         protected override void SetUpNodeInfo()
         {
