@@ -51,10 +51,6 @@ namespace BozjaBuddy.GUI
             {
                 if (!this.mCycles.CheckCycle("masterKey", 0.2f)) return;                                  // originally key='mycInfo'
                 if (AtkStage.Instance() == null || AtkStage.Instance()->RaptureAtkUnitManager == null) return;      // null on logging out
-                if (this.mCycles.CheckCycle("mycInfo", 5))
-                {
-                    this.Scraper_MycInfo();
-                }
                 if (this.mCycles.CheckCycle("mycWarResultNotebook", 0.2f)) this.Scraper_MycWarResultNotebook();
                 if (this.mCycles.CheckCycle("save", 60)) this.mPlugin.Configuration.Save();
             }
@@ -68,89 +64,9 @@ namespace BozjaBuddy.GUI
                 {
                     Thread.Sleep(200);
                     if (AtkStage.Instance() == null || AtkStage.Instance()->RaptureAtkUnitManager == null) return;      // null on logging out
-                    if (this.mCycles.CheckCycle("mycInfo", 5)) this.Scraper_MycInfo();
                     if (this.mCycles.CheckCycle("mycWarResultNotebook", 0.2f)) this.Scraper_MycWarResultNotebook();
                     if (this.mCycles.CheckCycle("save", 60)) this.mPlugin.Configuration.Save();
                 }
-            }
-        }
-        private void Scraper_MycInfo()
-        {
-            unsafe
-            {
-                var tCharStats = this.mPlugin.Configuration.mGuiAssistConfig.charStats;
-
-                // Mettle, ranks, etc.
-                var tAddonMycInfo = (AtkUnitBase*)this.mPlugin.GameGui.GetAddonByName("MYCInfo").Address;
-                if (tAddonMycInfo == null) { return; }
-
-                var tNodeRank = (AtkTextNode*)UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new int[] { 7 }); 
-                if (tNodeRank == null) 
-                {
-                    tCharStats.noto = -1;
-                    return; 
-                }
-                var tNodeMettle = (AtkTextNode*)UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new int[] { 14 }); 
-                if (tNodeMettle == null)
-                {
-                    tCharStats.noto = -1;
-                    return;
-                }
-                var tNodeMettleMax = (AtkTextNode*)UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new int[] { 17 }); 
-                if (tNodeMettleMax == null)
-                {
-                    tCharStats.noto = -1;
-                    return;
-                }
-                var tNodeProof = (AtkTextNode*)UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new int[] { 22 }); 
-                if (tNodeProof == null)
-                {
-                    tCharStats.noto = -1;
-                    return;
-                }
-                var tNodeCluster = (AtkTextNode*)UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new int[] { 33 }); 
-                if (tNodeCluster == null)
-                {
-                    tCharStats.noto = -1;
-                    return;
-                }
-                var tNodeNoto = (AtkTextNode*)UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new int[] { 26 }); 
-                if (tNodeNoto == null)
-                {
-                    tCharStats.noto = -1;
-                    return;
-                }
-
-                tCharStats.isInit = true;
-                if (!int.TryParse(tNodeRank->NodeText.ToString(), out tCharStats.rank)) tCharStats.rank = 0;
-                if (!int.TryParse(tNodeMettle->NodeText.ToString().Replace(",", ""), out tCharStats.mettle)) tCharStats.mettle = 0;
-                if (!int.TryParse(tNodeMettleMax->NodeText.ToString().Replace(",", ""), out tCharStats.mettleMax)) tCharStats.mettleMax = 0;
-                if (!int.TryParse(tNodeProof->NodeText.ToString(), out tCharStats.proof)) tCharStats.proof = 0;
-                if (!int.TryParse(tNodeCluster->NodeText.ToString().Split('/').First(), out tCharStats.cluster)) tCharStats.cluster = 0;
-                if (!int.TryParse(tNodeNoto->NodeText.ToString(), out tCharStats.noto)) tCharStats.noto = 0;
-
-                // Rays
-                if (this.mPlugin.ObjectTable.LocalPlayer != null)
-                {
-                    Dictionary<int, int> tStatusList = new();
-                    foreach (Dalamud.Game.ClientState.Statuses.IStatus s in this.mPlugin.ObjectTable.LocalPlayer.StatusList)
-                    {
-                        tStatusList.TryAdd((int)s.StatusId, (int)s.Param);
-                    }
-                    foreach (int iStatusId in new int[] { 2625, 2626, 2627 })
-                    {
-                        if (tStatusList.TryGetValue(iStatusId, out int tTemp))
-                        {
-                            switch (iStatusId)
-                            {
-                                case 2625: tCharStats.rayFortitude = tTemp == 0 ? tCharStats.rayFortitude : tTemp; break;
-                                case 2626: tCharStats.rayValor = tTemp == 0 ? tCharStats.rayValor : tTemp; break;
-                                case 2627: tCharStats.raySuccor = tTemp == 0 ? tCharStats.raySuccor : tTemp; break;
-                            }
-                        }
-                    }
-                }
-                this.mPlugin.Configuration.mGuiAssistConfig.charStats = tCharStats;
             }
         }
         /// <summary>

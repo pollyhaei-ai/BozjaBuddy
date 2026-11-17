@@ -4,7 +4,6 @@ using System;
 using static BozjaBuddy.GUI.GUIAssist.GUIAssistManager;
 using System.Collections.Generic;
 using BozjaBuddy.Data;
-using BozjaBuddy.Data.Alarm;
 using BozjaBuddy.Utils;
 using System.Linq;
 using Dalamud.Logging;
@@ -24,28 +23,20 @@ namespace BozjaBuddy
         public int Version { get; set; } = 0;
         
         [NonSerialized]
-        public Dalamud.Interface.Windowing.WindowSizeConstraints SizeConstraints = new()
+        public Dalamud.Interface.Windowing.Window.WindowSizeConstraints SizeConstraints = new()
         {
             MinimumSize = new Vector2(675, 509),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        public const int kDefaultAlarmDuration = 30;
-        public const int kDefaultAlarmOffset = 30;
-        public const float kDefaultVolume = 1.0f;
         private static bool _isLocked = false;
 
         public float STYLE_ICON_SIZE { get; set; } = 20f;
-        public float mAudioVolume = Configuration.kDefaultVolume;
-        public string? mAudioPath = null;
-        public int mDefaultAlarmDuration = Configuration.kDefaultAlarmDuration;
-        public int mDefaultAlarmOffset = Configuration.kDefaultAlarmOffset;
         public Dictionary<GUIAssistOption, bool> mOptionState = new();
         public Dictionary<int, int> _userCacheData = new();
         public Dictionary<int, int> _userHolsterData = new();
         /// <summary> for when LostAction id is not available (e.g. crawling Add on). Not recommended. </summary>
         public Dictionary<string, int> _userHolsterDataByName = new();
-        public bool mMuteAAudioOnGameFocused = true;
         public bool mIsCacheAlertGeneralActive = true;
         public int mCacheAlertGeneralThreshold = 10;
         public bool mIsCacheAlertSpecificActive = true;
@@ -58,8 +49,7 @@ namespace BozjaBuddy
         public int isAuxiVisible = 1;       // 0:hidden    1:half-window   2:full-window
         public HashSet<int> mCacheAlertIgnoreIds = new();
         public HashSet<int> mUserFieldNotes = new();
-        public bool mIsAuxiUsingNGV = true;
-        public string? mAuxiNGVSaveData = null;
+        public bool mIsAuxiUsingNGV = false;
         public Dictionary<Job, RelicSection.RelicStep> mRelicProgress = UtilsGameData.kRelicValidJobs.ToDictionary(o => o, o => RelicSection.RelicStep.None);
 
         public bool mIsRelicFirstTime = true;
@@ -67,13 +57,6 @@ namespace BozjaBuddy
         public Job mRelicCurrJob = RelicSection.kDefaultCurrJob;
 
         public GuiAssistConfig mGuiAssistConfig = new();
-
-        // User data
-        public LoadoutListJson? UserLoadouts = null;
-        public List<List<Alarm>>? UserAlarms = null;
-
-        public Dictionary<Job, List<int?>> _autoLoadout = (new List<Job>((Job[])Enum.GetValues(typeof(Job))))       // public so that it'd save into the config
-                                                        .ToDictionary(o => o, o => new List<int?>() { null, null });
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
@@ -99,41 +82,6 @@ namespace BozjaBuddy
             Configuration._isLocked = true;
             this.PluginInterface!.SavePluginConfig(this);
             Configuration._isLocked = false;
-        }
-        public void SetOverlay(Job pJob, int? pLoadoutId, int pSlotIndex = 0)
-        {
-            if (!UtilsGameData.kValidJobs.Contains(pJob)) return;
-
-            pSlotIndex = System.Math.Abs(pSlotIndex > this._autoLoadout.Count ? this._autoLoadout.Count - 1 : pSlotIndex);
-            if (!this._autoLoadout.ContainsKey(pJob)) { this._autoLoadout.Add(pJob, new List<int?>(this._autoLoadout.Count)); }
-            else { this._autoLoadout[pJob][pSlotIndex] = pLoadoutId; }
-            this.Save();
-        }
-        /// <summary>
-        /// Get Loadout's ID from autoloadout
-        /// </summary>
-        public int? GetOverlay(Job pJob, int pSlotIndex = 0) => this._autoLoadout[pJob][System.Math.Abs(pSlotIndex > this._autoLoadout.Count ? this._autoLoadout.Count - 1 : pSlotIndex)];
-        /// <summary>
-        /// Get Loadout from autoloadout
-        /// </summary>
-        public Loadout? GetOverlay(Plugin pPlugin, Job pJob, int pSlotIndex = 0)
-        {
-            int? tLoadoutId = this.GetOverlay(pJob, pSlotIndex: pSlotIndex);
-            if (tLoadoutId == null) return null;
-            if (!pPlugin.mBBDataManager.mLoadouts.ContainsKey(tLoadoutId!.Value))
-            {
-                this.SetOverlay(pJob, null);
-                return null;
-            }
-            return pPlugin.mBBDataManager.mLoadouts[tLoadoutId!.Value];
-        }
-        public Loadout? GetActiveOverlay(Plugin pPlugin)
-        {
-            var tUserJob = this.mGuiAssistConfig.overlay.isUsingJobSpecific
-                            ? UtilsGameData.GetUserJob(pPlugin)
-                            : Job.ALL;
-            if (tUserJob == null) return null;
-            return this.GetOverlay(pPlugin, tUserJob.Value, this.mGuiAssistConfig.overlay.currentSlotIndex);
         }
         public int GetCacheSpecificThresholds(int pActionId)
         {

@@ -4,7 +4,7 @@ namespace BozjaBuddy.Filter.LostActionTableSection
 {
     internal class FilterCharges : Filter
     {
-        public override string mFilterName { get; set; } = "charges";
+        public override string mFilterName { get; set; } = "次數";
         private new int[] mLastValue = default!;
         private new int[] mCurrValue = default!;
 

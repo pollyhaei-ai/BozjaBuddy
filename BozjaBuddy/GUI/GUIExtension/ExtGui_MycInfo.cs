@@ -49,9 +49,9 @@ namespace BozjaBuddy.GUI.GUIExtension
             // Open main window button
             if (ImGuiComponents.IconButton(FontAwesomeIcon.ArrowUpRightFromSquare))
             {
-                Plugin.GetWindow("Bozja Buddy")!.IsOpen = !(Plugin.GetWindow("Bozja Buddy")!.IsOpen);
+                Plugin.GetWindow(Plugin.MainWindowTitle)!.IsOpen = !(Plugin.GetWindow(Plugin.MainWindowTitle)!.IsOpen);
             }
-            UtilsGUI.SetTooltipForLastItem("Open Bozja Buddy window. To turn off this UI: Config > UI Assist > [A] > [1]");
+            UtilsGUI.SetTooltipForLastItem("開啟博茲雅助手。可在設定 > 介面關閉。");
 
             // Search all bar
             var tTemp = this.mGuiVars["searchAll"];

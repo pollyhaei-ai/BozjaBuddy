@@ -7,7 +7,7 @@ namespace BozjaBuddy.Filter.FieldNoteTableSection
 {
     internal class FitlerFate : Filter
     {
-        public override string mFilterName { get; set; } = "fate";
+        public override string mFilterName { get; set; } = "來源";
         protected Dictionary<int, Tuple<string, bool>?> _cacheRes = new();
 
         public FitlerFate() { }

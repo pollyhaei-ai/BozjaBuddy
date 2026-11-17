@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Logging;
-using ImGuiScene;
 using System.Numerics;
 using System.Linq;
 using Lumina.Excel.Sheets;
@@ -150,71 +149,7 @@ namespace BozjaBuddy.GUI.GUIAssist
         }
         private void Draw_MycInfoAlarm()
         {
-            if (this.mPlugin.Configuration.mGuiAssistConfig.itemInfo.isDisabled_All) return;
-            //PluginLog.LogDebug($"> GUIAssistMng: isMainFocus={this.mPlugin.WindowSystem.HasAnyFocus} hasInfoKey={this.mOptionRequests.ContainsKey(GUIAssistOption.MycInfoBox)} keys={(this.mOptionRequests.ContainsKey(GUIAssistOption.MycInfoBox) ? String.Join(", ", this.mOptionRequests[GUIAssistOption.MycInfoBox].ToList()) : 0)} keyAlmMng={this.mPlugin.AlarmManager.mHash}");
-            if (!this.mPlugin.mIsMainWindowActive
-                && this.mOptionRequests.ContainsKey(GUIAssistOption.MycInfoBoxAlarm)
-                && !this.mOptionRequests[GUIAssistOption.MycInfoBoxAlarm].Contains(this.mPlugin.AlarmManager.mHash)
-                    )
-            {
-                return;         // Abort when Main window is not active + AlarmManager is not requesting GUIAssist
-            }
-            // abort if user is in a raid, or a Fate/CE
-            if ((DateTime.Now - this._cycleOneSecond).TotalSeconds > 1 && this.mPlugin.ObjectTable.LocalPlayer != null)
-            {
-                this._cycleOneSecond = DateTime.Now;
-                var tStatusList = this.mPlugin.ObjectTable.LocalPlayer.StatusList.Select(s => s.StatusId);
-                if (tStatusList.Contains((uint)StatusId.DutyAsAssigned))
-                {
-                    this.mStatus |= GUIAssistStatusFlag.InRaidCe;
-                    return;
-                }
-                else
-                {
-                    this.mStatus &= ~GUIAssistStatusFlag.InRaidCe;
-                }
-            }
-            if (this.mStatus.HasFlag(GUIAssistStatusFlag.InRaidCe)) { return; }
-
-            unsafe
-            {
-                try
-                {
-                    var tAddonMycInfo = (AtkUnitBase*)this.mPlugin.GameGui.GetAddonByName("MYCInfo").Address;
-                    var tAddonMycBattleAreaInfo = (AtkUnitBase*)this.mPlugin.GameGui.GetAddonByName("MYCBattleAreaInfo").Address;
-                    if (tAddonMycInfo == null || tAddonMycBattleAreaInfo != null) return;
-
-                    var tNode_Button = Utils.UtilsGUI.GetNodeByIdPath(this.mPlugin, "MYCInfo", new[] { 36 });
-                    if (tNode_Button == null) { return; }
-
-                    float tCoordX = tNode_Button->ScreenX;
-                    float tCoordY = tNode_Button->ScreenY;
-                    float tSizeX = tNode_Button->Width * tAddonMycInfo->RootNode->GetScaleX();
-                    float tSizeY = tNode_Button->Height * tAddonMycInfo->RootNode->GetScaleY();
-
-                    //PluginLog.LogDebug($"> 1 :: coordX={tCoordX} coordY={tCoordY} sizeX={tSizeX} sizeY={tSizeY}");
-
-                    ImGui.GetBackgroundDrawList().AddRect(
-                        new Vector2(tCoordX, tCoordY),
-                        new Vector2(tCoordX + tSizeX, tCoordY + tSizeY),
-                        DateTime.Now.Second % 2 == 0
-                            ? ImGui.ColorConvertFloat4ToU32(Utils.UtilsGUI.Colors.ActivatedText_Green)
-                            : ImGui.ColorConvertFloat4ToU32(Utils.UtilsGUI.Colors.NormalText_Red),
-                        1,
-                        ImDrawFlags.None,
-                        5
-                        );
-                    ImGui.GetBackgroundDrawList().AddText(
-                        new Vector2(tCoordX, tCoordY + (float)(tSizeY * 1.2)),
-                        ImGui.ColorConvertFloat4ToU32(Utils.UtilsGUI.Colors.ActivatedText_Green),
-                        "BozjaBuddy: Keep this open for CE-related features.\n(To turn off: Config > UI hints > [A] > [2])"
-                        );
-                }
-                catch (Exception e)
-                {
-                    this.mPlugin.PLog.Error(e.ToString());
-                }
-            }
+            // CE/alarm hint removed with the alarm feature.
         }
         private void Draw_MycItemBox()
         {
@@ -259,8 +194,6 @@ namespace BozjaBuddy.GUI.GUIAssist
                 if (tConfig.mGuiAssistConfig.itemBox.isDisabled_All) return;
 
                 // Applying filters to the GUI
-                Loadout? tLoadout = tConfig.GetActiveOverlay(this.mPlugin);
-                var tItemBoxCfg = tConfig.mGuiAssistConfig.itemBox;
                 try
                 {
                     if (tAddonMycItemBox == null) 
@@ -269,242 +202,34 @@ namespace BozjaBuddy.GUI.GUIAssist
                         return; 
                     }
                     this._cycle2 = DateTime.MinValue;
-                    BozjaBuddy.Data.Role tRole = UtilsGameData.GetUserRole(this.mPlugin) ?? BozjaBuddy.Data.Role.None;
-
-                    // Filtering. Overwriting priority: Overlay > Toolbar filter
                     int tTextFilterLevel = tConfig.mGuiAssistConfig.itemBox.isDisabled_FilterText ? 0 : tConfig.mGuiAssistConfig.itemBox.filterTextLevel;
-                    int tLoadoutFilterLevel = tConfig.mGuiAssistConfig.itemBox.isDisabled_FilterLoadout ? 0 : tConfig.mGuiAssistConfig.itemBox.filterLoadoutLevel;
                     foreach (LostAction iLostAction in this.mPlugin.mBBDataManager.mLostActions.Values)
                     {
-                        bool tIsFilteredIn = false;
                         if (iLostAction.mUINode == null) continue;
-                        // Filters
-                        if (this.mExtGui_MycItemBox.CanPassAllFilters(iLostAction))
+                        bool tIsFilteredIn = this.mExtGui_MycItemBox.CanPassAllFilters(iLostAction);
+                        switch (tTextFilterLevel)
                         {
-                            tIsFilteredIn = true;
-                            switch (tTextFilterLevel)
-                            {
-                                case 1: this.UnfadeNode(iLostAction.mUINode); break;
-                                case 2: this.ShowNode(iLostAction.mUINode); break;
-                                default: break;
-                            }
-                        }
-                        else
-                        {
-                            switch (tTextFilterLevel)
-                            {
-                                case 1:
-                                    this.FadeNode(iLostAction.mUINode); break;
-                                case 2:
-                                    this.HideNode(iLostAction.mUINode); break;
-                                default: break;
-                            }
-                        }
-                        // Overlay
-                        Job? tUserJob = tConfig.mGuiAssistConfig.overlay.isUsingJobSpecific
-                                        ? UtilsGameData.GetUserJob(this.mPlugin)        // use overlay of user's curr job
-                                        : Job.ALL;                                      // use overlay of Job.ALL
-                        int tAmountHolster = tItemBoxCfg.userHolsterData.ContainsKey(iLostAction.mId) 
-                                             ? tItemBoxCfg.userHolsterData[iLostAction.mId]
-                                             : 0;
-                        if (tUserJob != null)      
-                        {
-                            if (tLoadout != null
-                                && tLoadout.mActionIds.Count != 0)
-                            {
-                                int tAmountLoadout = tLoadout.mActionIds.ContainsKey(iLostAction.mId) ? tLoadout.mActionIds[iLostAction.mId] : 0;
-                                if (tLoadout.mActionIds.ContainsKey(iLostAction.mId))
-                                {
-                                    switch (tLoadoutFilterLevel)
-                                    {
-                                        case 1: 
-                                            if (tAmountHolster < tAmountLoadout)
-                                            {
-                                                this.HighlightNode(iLostAction.mUINode, pIsFlashing: true);
-                                                this.DisplayTextOnNode(iLostAction.mUINode, (tAmountLoadout - tAmountHolster).ToString());
-                                            }
-                                            this.UnfadeNode(iLostAction.mUINode);
-                                            this.ShowNode(iLostAction.mUINode); 
-                                            break;
-                                        case 2:
-                                            if (tAmountHolster < tAmountLoadout)
-                                            {
-                                                this.HighlightNode(iLostAction.mUINode, pIsFlashing: true);
-                                                this.DisplayTextOnNode(iLostAction.mUINode, (tAmountLoadout - tAmountHolster).ToString());
-                                            }
-                                            this.UnfadeNode(iLostAction.mUINode);
-                                            this.ShowNode(iLostAction.mUINode); 
-                                            break;
-                                        default: break;
-                                    }
-                                }
-                                else
-                                {
-                                    switch (tLoadoutFilterLevel)
-                                    {
-                                        case 0:
-                                            if (tIsFilteredIn) 
-                                            {
-                                                this.ShowNode(iLostAction.mUINode);
-                                                this.UnfadeNode(iLostAction.mUINode);
-                                            }
-                                            else
-                                            {
-                                                switch (tTextFilterLevel)
-                                                {
-                                                    case 0: this.UnfadeNode(iLostAction.mUINode); break;
-                                                    case 1: this.ShowNode(iLostAction.mUINode); break;
-                                                }
-                                            }
-                                            break;
-                                        case 1:
-                                            if (tIsFilteredIn)     // only the one filtered in
-                                            {
-                                                this.ShowNode(iLostAction.mUINode);
-                                            }
-                                            else
-                                            {
-                                                switch (tTextFilterLevel)
-                                                {
-                                                    case 0: this.UnfadeNode(iLostAction.mUINode); break;
-                                                    case 1: this.ShowNode(iLostAction.mUINode); break;
-                                                }
-                                            }
-
-                                            break;
-                                        case 2:                    // ignore the one filtered in while EITHER T_filter having input OR T_filter being disabled
-                                            if (tTextFilterLevel == 0
-                                                || !(tIsFilteredIn && this.mExtGui_MycItemBox.IsAnyFilterActive(iLostAction)))
-                                            {
-                                                this.HideNode(iLostAction.mUINode);
-                                            }
-                                            else
-                                            {
-                                                this.ShowNode(iLostAction.mUINode);
-                                            }
-                                            break;;
-                                        default: break;
-                                    }
-                                }
-                            }
-                            else if (tLoadout == null)
-                            {
+                            case 1:
+                                this.ShowNode(iLostAction.mUINode);
+                                if (tIsFilteredIn) this.UnfadeNode(iLostAction.mUINode);
+                                else this.FadeNode(iLostAction.mUINode);
+                                break;
+                            case 2:
                                 if (tIsFilteredIn)
                                 {
                                     this.ShowNode(iLostAction.mUINode);
                                     this.UnfadeNode(iLostAction.mUINode);
                                 }
-                                else
-                                {
-                                    switch (tTextFilterLevel)
-                                    {
-                                        case 0:
-                                            this.ShowNode(iLostAction.mUINode);
-                                            this.UnfadeNode(iLostAction.mUINode);
-                                            break;
-                                        case 1:
-                                            this.ShowNode(iLostAction.mUINode);
-                                            this.FadeNode(iLostAction.mUINode);
-                                            break;
-                                        case 2:
-                                            this.HideNode(iLostAction.mUINode);
-                                            break;
-                                        default: break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    this.mPlugin.PLog.Error(e.ToString());
-                }
-
-                this.Draw_MycItemBagTrade(tLoadout, tItemBoxCfg.userHolsterDataByName);
-            }
-        }
-        private void Draw_MycItemBagTrade(Loadout? pLoadout, Dictionary<string, int> pUserHolsterDataByName)
-        {
-            //if (pLoadout == null) { return; }
-            unsafe
-            {
-                var tAddon = (AtkUnitBase*)this.mPlugin.GameGui.GetAddonByName("MYCItemBagTrade").Address;
-                if (tAddon == null) { return; }
-                var tTreeList = (AtkComponentNode*)tAddon->GetNodeById(18);
-                if (tTreeList == null) { return; }
-                for (int i = 0; i < tTreeList->Component->UldManager.NodeListCount; i++)
-                {
-                    var n = tTreeList->Component->UldManager.NodeList[i];
-                    if (n == null) { continue; }
-                    var nCompNode = n->GetAsAtkComponentNode();
-                    if (nCompNode == null) { continue; }
-                    if (nCompNode->Component->UldManager.NodeListCount != 7 && nCompNode->Component->UldManager.NodeListCount != 8) { continue; }   // Only item node has 8 pr 7 child
-                    int? tNodeActionId = null;      // this var is just a dud.
-                    string tNodeActionName = "";
-
-                    // If loadout == null, by default set this node visible and unfade
-                    if (pLoadout == null)
-                    {
-                        if (nCompNode->Component == null) { continue; }
-                        var ttNodeIcon = GetNodeByID<AtkResNode>(nCompNode->Component->UldManager, 2);
-                        if (ttNodeIcon == null) { continue; }
-                        ttNodeIcon->ToggleVisibility(true);
-                        ttNodeIcon->Color.A = 255;
-                        continue;
-                    }
-                    // Confirmed item node. Check item node for existence and is loadout-included.
-                    if (n->NodeId == 4
-                        || (n->NodeId > 100 && n->NodeId % 100 > 0 && n->NodeId % 100 < 13))        // Check range of node
-                    {
-                        if (nCompNode->Component == null) { continue; }
-                        var tTextNode = GetNodeByID<AtkTextNode>(
-                            nCompNode->Component->UldManager,
-                            (uint)(nCompNode->Component->UldManager.NodeListCount == 7 ? 5 : 6),
-                            NodeType.Text);
-                        if (tTextNode == null) { continue; }
-                        tNodeActionName = tTextNode->NodeText.ToString();
-                        if (tNodeActionName.IsNullOrEmpty()) { continue; }
-
-                        // Crosscheck with Agent (if the action is really exist in the holster)
-                        if (!(pUserHolsterDataByName.ContainsKey(tNodeActionName)
-                            && pUserHolsterDataByName[tNodeActionName] != 0))
-                        {
-                            continue;
-                        }
-
-                        // Crosscheck with Loadout (if the action is in loadout. We need the one that is not in loadout)
-                        foreach (int iActionId in pLoadout.mActionIds.Keys)
-                        {
-                            if (this.mPlugin.mBBDataManager.mLostActions[iActionId].mName == tNodeActionName)
-                            {
-                                tNodeActionId = this.mPlugin.mBBDataManager.mLostActions[iActionId].mId;
+                                else this.HideNode(iLostAction.mUINode);
                                 break;
-                            }
+                            default:
+                                this.ShowNode(iLostAction.mUINode);
+                                this.UnfadeNode(iLostAction.mUINode);
+                                break;
                         }
-                    }
-                    else continue;
-                    // Apply fx
-                    var tNodeIcon = GetNodeByID<AtkResNode>(nCompNode->Component->UldManager, 2);
-                    if (tNodeIcon == null) { continue; }
-                    if (!tNodeActionId.HasValue)                 // Item exists + is not in loadout
-                    {
-                        //PluginLog.LogDebug($"> node={tNodeActionName} ||||| Vis OFF");
-                        switch (this.mPlugin.Configuration.mGuiAssistConfig.itemBox.filterLoadoutLevel)
-                        {
-                            case 0: tNodeIcon->Color.A = 255; tNodeIcon->ToggleVisibility(true); break;
-                            case 1: tNodeIcon->ToggleVisibility(true); tNodeIcon->Color.A = 60; break;
-                            case 2: tNodeIcon->ToggleVisibility(false); break;
-                            default: break;
-                        }
-                    }
-                    else
-                    {
-                        //PluginLog.LogDebug($"> node={tNodeActionName} ||||| Vis ON");
-                        tNodeIcon->ToggleVisibility(true);
-                        tNodeIcon->Color.A = 255;
                     }
                 }
+                catch (Exception e) { this.mPlugin.PLog.Error(e.ToString()); }
             }
         }
         private void Restore_MycItemBox()
@@ -516,20 +241,8 @@ namespace BozjaBuddy.GUI.GUIAssist
                 {
                     if (iLostAction.mUINode != null)
                     {
-                        if (tGaConfig.itemBox.filterLoadoutLevel == 1 && tGaConfig.itemBox.filterTextLevel == 1)
-                        {
-                            this.ShowNode(iLostAction.mUINode);
-                            this.UnfadeNode(iLostAction.mUINode);
-                        }
-                        else if (tGaConfig.itemBox.filterLoadoutLevel == 2 && tGaConfig.itemBox.filterTextLevel == 2)
-                        {
-                            this.UnfadeNode(iLostAction.mUINode);
-                        }
-                        else if(tGaConfig.itemBox.filterLoadoutLevel == 0 && tGaConfig.itemBox.filterTextLevel == 0)
-                        {
-                            this.ShowNode(iLostAction.mUINode); 
-                            this.UnfadeNode(iLostAction.mUINode);
-                        }
+                        this.ShowNode(iLostAction.mUINode);
+                        this.UnfadeNode(iLostAction.mUINode);
                     }
                 }
             }

@@ -1,124 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+<Project Sdk="Dalamud.NET.Sdk/13.1.0">
   <PropertyGroup>
     <Authors>kaleidocli</Authors>
     <Company></Company>
-    <Version>1.1.6.9</Version>
-    <Description>A plugin for Bozja content.</Description>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <InformationalVersion>1.2.0-tw</InformationalVersion>
+    <Description>繁中台灣精簡版（1.2.0-tw）。義軍武器、戰地筆記、失傳技能／遺忘的碎片，以及失傳技能持有欄覆蓋視窗。上游為 kaleidocli / K-Cli。</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/kaleidocli/BozjaBuddy</PackageProjectUrl>
+    <DalamudApiLevel>13</DalamudApiLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Platforms>x64;AnyCPU</Platforms>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Data\_raw\**" />
-    <Compile Remove="Data\_test\**" />
-    <Compile Remove="db\_raw\**" />
-    <Compile Remove="db\_test\**" />
-    <EmbeddedResource Remove="Data\_raw\**" />
-    <EmbeddedResource Remove="Data\_test\**" />
-    <EmbeddedResource Remove="db\_raw\**" />
-    <EmbeddedResource Remove="db\_test\**" />
-    <None Remove="Data\_raw\**" />
-    <None Remove="Data\_test\**" />
-    <None Remove="db\_raw\**" />
-    <None Remove="db\_test\**" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-  </PropertyGroup>
-  
-   <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
-    <DalamudLibPath>$(DALAMUD_HOME)/</DalamudLibPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NAudio.Wasapi" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="QuickGraph" Version="3.6.61119.7" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-    <PackageReference Include="FFXIVWeather" Version="1.0.17" />
-    <Reference Include="FFXIVClientStructs">
-      <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Dalamud">
-      <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="ImGui.NET">
-      <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="ImGuiScene">
-      <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Lumina">
-      <HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Lumina.Excel">
-      <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
   </ItemGroup>
 
-
   <ItemGroup>
-    <Folder Include="db\audio\" />
-    <Folder Include="db\img\" />
-  </ItemGroup>
-
-  <Target Name="db" AfterTargets="Build">
-    <MakeDir Directories="$(OutDir)db" />
-    <MakeDir Directories="$(OutDir)db\audio" />
-    <MakeDir Directories="$(OutDir)db\img" />
-  </Target>
-
-  <ItemGroup>
-    <Content Include="db\img\**">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
     <Content Include="db\LostAction.db">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="db\LostAction.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="db\loadout_preset.json">
+    <Content Include="db\UIMap_LostAction.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-	  <Content Include="db\UIMap_LostAction.json">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-    <Content Include="db\audio\epicsaxguy.mp3">
+    <Content Include="db\YurukaStd-UB-AlphaNum.otf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-	  <Content Include="db\YurukaStd-UB-AlphaNum.otf">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
+    <Content Include="..\images\icon.png">
+      <Link>images\icon.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
-	
-	<Target Name="Prune" AfterTargets="Build">
-		<RemoveDir Directories="$(TargetDir)runtimes/alpine-x64/;$(TargetDir)runtimes/linux-arm/;$(TargetDir)runtimes/linux-arm64/;$(TargetDir)runtimes/linux-armel/;$(TargetDir)runtimes/linux-mips64/;$(TargetDir)runtimes/linux-musl-x64/;$(TargetDir)runtimes/linux-s390x/;$(TargetDir)runtimes/linux-x64/;$(TargetDir)runtimes/linux-x86/;$(TargetDir)runtimes/osx-arm64/;$(TargetDir)runtimes/osx-x64/;$(TargetDir)runtimes/win-arm/;$(TargetDir)runtimes/win-arm64/;$(TargetDir)runtimes/win-x86/;$(TargetDir)runtimes/alpine-arm/;$(TargetDir)runtimes/alpine-arm64/;$(TargetDir)runtimes/browser-wasm/;$(TargetDir)runtimes/browser;$(TargetDir)runtimes/linux-musl-arm/;$(TargetDir)runtimes/linux-musl-arm64/;$(TargetDir)runtimes/maccatalyst-arm64/;$(TargetDir)runtimes/maccatalyst-x64/;" />
-	</Target>
 
+  <Target Name="Prune" AfterTargets="Build">
+    <RemoveDir Directories="$(TargetDir)runtimes/alpine-x64/;$(TargetDir)runtimes/linux-arm/;$(TargetDir)runtimes/linux-arm64/;$(TargetDir)runtimes/linux-armel/;$(TargetDir)runtimes/linux-mips64/;$(TargetDir)runtimes/linux-musl-x64/;$(TargetDir)runtimes/linux-s390x/;$(TargetDir)runtimes/linux-x64/;$(TargetDir)runtimes/linux-x86/;$(TargetDir)runtimes/osx-arm64/;$(TargetDir)runtimes/osx-x64/;$(TargetDir)runtimes/win-arm/;$(TargetDir)runtimes/win-arm64/;$(TargetDir)runtimes/win-x86/;$(TargetDir)runtimes/alpine-arm/;$(TargetDir)runtimes/alpine-arm64/;$(TargetDir)runtimes/browser-wasm/;$(TargetDir)runtimes/browser;$(TargetDir)runtimes/linux-musl-arm/;$(TargetDir)runtimes/linux-musl-arm64/;$(TargetDir)runtimes/maccatalyst-arm64/;$(TargetDir)runtimes/maccatalyst-x64/;" />
+  </Target>
 </Project>

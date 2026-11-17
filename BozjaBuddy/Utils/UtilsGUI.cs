@@ -1,8 +1,5 @@
 ﻿using BozjaBuddy.Data;
-using BozjaBuddy.Data.Alarm;
 using BozjaBuddy.GUI;
-using BozjaBuddy.GUI.NodeGraphViewer;
-using BozjaBuddy.GUI.NodeGraphViewer.ext;
 using BozjaBuddy.GUI.Sections;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
@@ -12,7 +9,6 @@ using Dalamud.Logging;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Dalamud.Bindings.ImGui;
-using ImGuiScene;
 using Lumina.Excel.Sheets;
 using System;
 using System.Collections;
@@ -199,10 +195,7 @@ namespace BozjaBuddy.Utils
             bool pIsShowingLinkIcon = true,
             string pAdditionalHoverText = "",
             bool pIsAuxiLinked = true,
-            InputPayload? pInputPayload = null,
-            NodeGraphViewer? pNGViewer = null,          // the viewer to hook this link to
-            bool pBlockNGViewer = false,
-            AuxNode? pAuxNode = null)
+            InputPayload? pInputPayload = null)
         {
             pInputPayload ??= new InputPayload();
             bool tRes = UtilsGUI.SelectableLink(
@@ -213,7 +206,7 @@ namespace BozjaBuddy.Utils
                 pIsClosingPUOnClick: pIsClosingPUOnClick, 
                 pTextColor: pTextColor,
                 pSize: pSize,
-                pIsAuxiLinked: pAuxNode == null ? pIsAuxiLinked : false,
+                pIsAuxiLinked: pIsAuxiLinked,
                 pInputPayload: pInputPayload);
             if (!pPlugin.mBBDataManager.mGeneralObjects.ContainsKey(pTargetGenId))
             {
@@ -221,7 +214,7 @@ namespace BozjaBuddy.Utils
                 return tRes;
             }
             GeneralObject tObj = pPlugin.mBBDataManager.mGeneralObjects[pTargetGenId];
-            if (!ImGui.GetIO().KeyShift) UtilsGUI.SetTooltipForLastItem($"{pAdditionalHoverText}[LMB] Show details\t\t[RMB] Options (marketboard, item link, etc.)\n────────────────────────────────\n{tObj.GetReprUiTooltip()}");
+            if (!ImGui.GetIO().KeyShift) UtilsGUI.SetTooltipForLastItem($"{pAdditionalHoverText}[左鍵] 查看詳細\t\t[右鍵] 市價板、連結等\n────────────────────────────────\n{tObj.GetReprUiTooltip()}");
 
             ImGui.PushID(pTargetGenId);
             if (!pInputPayload.mIsKeyShift && ImGui.BeginPopupContextItem(pContent, ImGuiPopupFlags.MouseButtonRight))
@@ -234,10 +227,8 @@ namespace BozjaBuddy.Utils
                 UtilsGUI.SypnosisClipboardButton(tObj.GetReprClipboardTooltip());
                 ImGui.Separator();
                 // Map_link to Clipboard + Chat
-                var tLocation = tObj.GetSalt() == GeneralObject.GeneralObjectSalt.Quest
-                                ? ((BozjaBuddy.Data.Quest)tObj).mIssuerLocation
-                                : tObj.GetReprLocation();
-                UtilsGUI.LocationLinkButton(pPlugin, tLocation!, pDesc: "Link position", pIsDisabled: tLocation == null ? true : false);
+                var tLocation = tObj.GetReprLocation();
+                UtilsGUI.LocationLinkButton(pPlugin, tLocation!, pDesc: "標記位置", pIsDisabled: tLocation == null);
                 ImGui.Separator();
                 // Invoke: Marketboard
                 int tFragId = tObj.mId;
@@ -258,36 +249,11 @@ namespace BozjaBuddy.Utils
                                     : true);
                 ImGui.EndGroup();
 
-                ImGui.SameLine();
-                // ACPU button
-                UtilsGUI.ACPUFateCeButton(pPlugin, tObj.mId, tObj.mName, pIsDisabled: tObj.GetSalt() == GeneralObject.GeneralObjectSalt.Fate ? false : true);
-
                 ImGui.EndPopup();
             }
             else if (tRes)
             {
-                if (!pBlockNGViewer)
-                {
-                    if (pAuxNode != null)
-                    {
-                        pAuxNode.SetSeed(
-                            new(
-                                AuxNode.nodeType,
-                                new BBNodeContent(pPlugin, pTargetGenId, tObj.mName),
-                                ofsToPrevNode: new Vector2(40, 20)
-                                ));
-                    }
-                    else if (pNGViewer != null)
-                    {
-                        pNGViewer.AddNodeToActiveCanvas<AuxNode>(new BBNodeContent(pPlugin, pTargetGenId, tObj.mName));
-                    }
-                    else if (pPlugin.Configuration.mIsAuxiUsingNGV)
-                    {
-                        pPlugin.NodeGraphViewer_Auxi.AddNodeToActiveCanvas<AuxNode>(new BBNodeContent(pPlugin, pTargetGenId, tObj.mName));
-                    }
-                    else Plugin.GetWindow("Bozja Buddy")!.IsOpen = true;
-                }
-                else Plugin.GetWindow("Bozja Buddy")!.IsOpen = true;
+                Plugin.GetWindow(Plugin.MainWindowTitle)!.IsOpen = true;
             }
             ImGui.PopID();
             // Lost action's cache amount
@@ -309,15 +275,15 @@ namespace BozjaBuddy.Utils
         {
             ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, UtilsGUI.FRAME_ROUNDING);
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, UtilsGUI.FRAME_PADDING);
-            if (ImGui.Button("Copy quick info"))
+            if (ImGui.Button("複製簡介"))
             {
                 ImGui.SetClipboardText(pSypnosis);
                 UtilsGUI.kTimeSinceLastClipboardCopied = DateTime.Now;
             }
             if ((DateTime.Now - UtilsGUI.kTimeSinceLastClipboardCopied).TotalSeconds < 5)
-                UtilsGUI.SetTooltipForLastItem("Copied to clipboard");
+                UtilsGUI.SetTooltipForLastItem("已複製到剪貼簿");
             else
-                UtilsGUI.SetTooltipForLastItem("Copy to clipboard general info\ne.g. name, location, mettle & exp reward, etc.");
+                UtilsGUI.SetTooltipForLastItem("複製名稱、位置等簡介。");
             ImGui.PopStyleVar();
             ImGui.PopStyleVar();
         }
@@ -325,7 +291,7 @@ namespace BozjaBuddy.Utils
         {
             ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, UtilsGUI.FRAME_ROUNDING);
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, pFramePadding ?? UtilsGUI.FRAME_PADDING);
-            if (!pUseIcon && ImGui.Button("Link item"))
+            if (!pUseIcon && ImGui.Button("連結到聊天"))
             {
                 UtilsGUI.kTimeSinceLastClipboardCopied = DateTime.Now;
                 ImGui.SetClipboardText(pReprName);
@@ -360,9 +326,9 @@ namespace BozjaBuddy.Utils
                 catch (Exception e) { pPlugin.PLog.Error(e.Message); }
             }
             if ((DateTime.Now - UtilsGUI.kTimeSinceLastClipboardCopied).TotalSeconds < 5)
-                UtilsGUI.SetTooltipForLastItem("Copied to clipboard");
+                UtilsGUI.SetTooltipForLastItem("已複製到剪貼簿");
             else
-                UtilsGUI.SetTooltipForLastItem("Link the item to chat. Also copy the item name to clipboard.");
+                UtilsGUI.SetTooltipForLastItem("把名稱連結到聊天，並複製到剪貼簿。");
             ImGui.PopStyleVar();
             ImGui.PopStyleVar();
         }
@@ -422,7 +388,7 @@ namespace BozjaBuddy.Utils
                     }
                 }
             }
-            UtilsGUI.SetTooltipForLastItem($"Mark on map + Link to Chat {(pIsTeleporting ? "+ Teleport" : "")}\n\nat: {pLocation.ToStringFull()}");
+            UtilsGUI.SetTooltipForLastItem($"在地圖標記並連結到聊天{(pIsTeleporting ? "，並傳送" : "")}\n\n{pLocation.ToStringFull()}");
             ImGui.PopStyleVar();
             ImGui.PopStyleVar();
         }
@@ -432,12 +398,12 @@ namespace BozjaBuddy.Utils
             if (pIsDisabled)
             {
                 ImGui.BeginDisabled();
-                ImGui.Button("Marketboard");
+                ImGui.Button("市價板");
                 ImGui.EndDisabled();
                 ImGui.PopStyleVar();
                 return;
             }
-            if (!pUseIcon && ImGui.Button("Marketboard"))
+            if (!pUseIcon && ImGui.Button("市價板"))
             {
                 pPlugin.CommandManager.ProcessCommand($"/pmb {pItemId}");
             }
@@ -445,7 +411,7 @@ namespace BozjaBuddy.Utils
             {
                 pPlugin.CommandManager.ProcessCommand($"/pmb {pItemId}");
             }
-            UtilsGUI.SetTooltipForLastItem("Look up marketboard. (Requires plugin [Market board] by <fmauNeko>)");
+            UtilsGUI.SetTooltipForLastItem("查市價板（需要另外安裝 Market board 外掛）。碎片與失傳技能會用對應道具編號。");
             ImGui.PopStyleVar();
         }
         public static void WindowLinkedButton(Plugin pPlugin, string pWinHandle, FontAwesomeIcon pButtonIcon, string? pHoveredText = null)
@@ -473,30 +439,6 @@ namespace BozjaBuddy.Utils
                 ImGui.Text(pHoveredText);
                 ImGui.EndTooltip();
             }
-        }
-        public static void ACPUFateCeButton(Plugin pPlugin, int pId, string pName, bool pIsDisabled = false)
-        {
-            if (pIsDisabled)
-            {
-                ImGui.BeginDisabled();
-                ImGuiComponents.IconButton(Dalamud.Interface.FontAwesomeIcon.Bell);
-                ImGui.EndDisabled();
-                return;
-            }
-            if (ImGuiComponents.IconButton(Dalamud.Interface.FontAwesomeIcon.Bell))
-            {
-                GUIAlarm.CreateACPU(
-                    pId.ToString(),
-                    pNameSuggestion: $"Fate/CE {Alarm.GetIdCounter()}: {pName} (fateId={pId})",
-                    pDefaultDuration: pPlugin.Configuration.mDefaultAlarmDuration,
-                    pDefaultOffset: pPlugin.Configuration.mDefaultAlarmOffset);
-            }
-            GUIAlarm.DrawACPU_FateCe(
-                pPlugin,
-                pId.ToString(),
-                pId
-                );
-            UtilsGUI.SetTooltipForLastItem("Set an alarm for this Fate/CE");
         }
         public static bool Checkbox(string pDesc, ref bool tValue, int? pGuiId = null)
         {
@@ -534,8 +476,7 @@ namespace BozjaBuddy.Utils
             Vector4? pImageOverlayRGBA = null,
             Vector4? pImageBorderColor = null,
             string pAdditionalHoverText = "",
-            InputPayload? pInputPayload = null,
-            AuxNode? pAuxNode = null)
+            InputPayload? pInputPayload = null)
         {
             bool tRes;
             var tAnchor = ImGui.GetCursorPos();
@@ -555,8 +496,7 @@ namespace BozjaBuddy.Utils
                     pIsShowingLinkIcon: false,
                     pAdditionalHoverText: pAdditionalHoverText,
                     pIsAuxiLinked: pIsAuxiLinked,
-                    pInputPayload: pInputPayload,
-                    pAuxNode: pAuxNode);
+                    pInputPayload: pInputPayload);
             }
             else
             {
@@ -583,110 +523,18 @@ namespace BozjaBuddy.Utils
                 );
             return tRes;
         }
-        /// <summary> 
-        /// NGV only. Specifically for quest chain. Quest chain linking should be using this.
-        /// <para> Add a new canvas containing quest chain graph. If a canvas with the same quest chain already exists, set focus on that canvas instead. </para>
-        /// </summary>
-        public static bool SelectableLink_QuestChain(
-            Plugin pPlugin,
-            string pContent,
-            QuestChain pQuestChain,
-            NodeGraphViewer? pNGVToOpenQuestChainIn = null,
-            InputPayload? pInputPayload = null
-            )
+        /// <summary>Shows the official quest name from the Quest sheet. Does not open a quest browser.</summary>
+        public static bool SelectableLink_Quest(Plugin pPlugin, int pQuestId, string? pContent = null)
         {
-            bool tRes = UtilsGUI.SelectableLink_WithPopup(
-                    pPlugin,
-                    pContent,
-                    pQuestChain.GetGenId(),
-                    pIsAuxiLinked: false,
-                    pBlockNGViewer: true,
-                    pInputPayload: pInputPayload
-                );
-            if (tRes && pPlugin.Configuration.mIsAuxiUsingNGV)
-            {
-                NodeGraphViewer tNGV = pNGVToOpenQuestChainIn ?? pPlugin.NodeGraphViewer_Auxi;
-                // Try to find and set focus on a canvas with the same quest chain tag
-                if (!tNGV.SetCanvasActive(pQuestChain.GetGenId().ToString()))
-                {
-                    tNGV.ImportCanvas(pQuestChain.GetCanvasData(), pQuestChain.GetGenId().ToString());
-                    tNGV.SetCanvasActive(pQuestChain.GetGenId().ToString());
-                }
-            }
-            return tRes;
+            var name = pContent ?? SheetNames.Quest(pPlugin, (uint)pQuestId) ?? $"任務 {pQuestId}";
+            bool clicked = ImGui.Selectable(name);
+            if (ImGui.IsItemHovered())
+                UtilsGUI.SetTooltipForLastItem("任務名稱來自遊戲資料。點一下複製名稱。");
+            if (clicked)
+                ImGui.SetClipboardText(name);
+            return clicked;
         }
-        /// <summary> 
-        /// NGV only. Specifically for quest.
-        /// <para> If the quest does not belong to a quest chain, it will behave like normal SelectableLink_PU </para>
-        /// <para> 
-        /// If the quest belongs to any quest chain, 
-        /// it will add/focus the tagged canvasses of all quest chains it belongs to, 
-        /// then focus on the node of the quest on that canvas.
-        /// </para>
-        /// </summary>
-        public static bool SelectableLink_Quest(
-            Plugin pPlugin,
-            string pContent,
-            BozjaBuddy.Data.Quest pQuest,
-            NodeGraphViewer? pNGVToOpenQuestChainIn = null,
-            InputPayload? pInputPayload = null
-            )
-        {
-            // case: normal SLPU
-            if (pQuest.mQuestChains.Count == 0)
-            {
-                return UtilsGUI.SelectableLink_WithPopup(pPlugin, pQuest.mName, pQuest.GetGenId());
-            }
 
-            bool tRes = UtilsGUI.SelectableLink_WithPopup(
-                    pPlugin,
-                    pContent,
-                    pQuest.GetGenId(),
-                    pIsAuxiLinked: false,
-                    pBlockNGViewer: true,
-                    pInputPayload: pInputPayload
-                );
-            if (tRes && pPlugin.Configuration.mIsAuxiUsingNGV)
-            {
-                NodeGraphViewer tNGV = pNGVToOpenQuestChainIn ?? pPlugin.NodeGraphViewer_Auxi;
-
-                foreach (var chainId in pQuest.mQuestChains)
-                {
-                    // Get chain
-                    if (!pPlugin.mBBDataManager.mQuestChains.TryGetValue(chainId, out var qChain) || qChain == null) continue;
-                    // Try to find and set focus on a canvas with the same quest chain tag
-                    if (!tNGV.SetCanvasActive(qChain.GetGenId().ToString()))
-                    {
-                        tNGV.ImportCanvas(qChain.GetCanvasData(), qChain.GetGenId().ToString(), noInitOfs: true);
-                        tNGV.SetCanvasActive(qChain.GetGenId().ToString());
-                    }
-                    // Focus on the node of the quest
-                    tNGV.FocusOnNodeTag_ActiveCanvas($"{Utils.NodeTagPrefix.SYS}{pQuest.GetGenId()}");
-                }
-            }
-            return tRes;
-        }
-        public static bool SelectableLink_Quest(
-            Plugin pPlugin,
-            int pQuestId,
-            string? pContent = null,
-            NodeGraphViewer? pNGVToOpenQuestChainIn = null,
-            InputPayload? pInputPayload = null
-            )
-        {
-            pPlugin.mBBDataManager.mQuests.TryGetValue(pQuestId, out var tQuest);
-            if (tQuest == null)
-            {
-                return ImGui.Selectable(pContent ?? "<unknown quest>");
-            }
-            return UtilsGUI.SelectableLink_Quest(
-                    pPlugin,
-                    pContent ?? tQuest.mName,
-                    tQuest,
-                    pNGVToOpenQuestChainIn,
-                    pInputPayload
-                );
-        }
         /// <summary>
         /// By default, display URL on hovering.
         /// </summary>
@@ -727,7 +575,7 @@ namespace BozjaBuddy.Utils
                 if (tItemLink != null)
                     pPlugin.ChatGui.Print(new Dalamud.Game.Text.XivChatEntry { Message = tItemLink });
             }
-            else UtilsGUI.SetTooltipForLastItem("Click to link item to chat.");
+            else UtilsGUI.SetTooltipForLastItem("點一下把道具連結到聊天。");
         }
         /// <summary>
         /// <para> luminaItemId:            id of the item in the Item lumina sheet. If BBItem is not found, a text will be displayed instead of a SL_PU. </para>

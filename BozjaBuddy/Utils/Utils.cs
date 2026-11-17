@@ -1,7 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Keys;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiScene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +51,7 @@ namespace BozjaBuddy.Utils
                 return false;
             }
 
-            if (pPlugin.ObjectTable.LocalPlayer == null)
+            if (pPlugin.ClientState.LocalPlayer == null)
                 return true;
             teleport->UpdateAetheryteList();
 

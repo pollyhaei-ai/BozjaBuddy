@@ -4,7 +4,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Logging;
 using Dalamud.Bindings.ImGui;
-using ImGuiScene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -169,7 +168,7 @@ namespace BozjaBuddy.GUI.Sections
                                         pImageOverlayRGBA: this.mPlugin.Configuration.mUserFieldNotes.Contains(tFieldNote.mId)
                                                             ? null
                                                             : new Vector4(1, 1, 1, 0.25f),
-                                        pAdditionalHoverText: "[Shift + LMB] Mark as obtained/unobtained\n"
+                                        pAdditionalHoverText: "[Shift + 左鍵] 標記已取得或未取得\n"
                                         )
                                 && io.KeyShift)
                             {
@@ -267,7 +266,7 @@ namespace BozjaBuddy.GUI.Sections
                                                 ? null
                                                 : new Vector4(1, 1, 1, 0.25f)
                                             : new Vector4(1, 1, 1, 0),
-                        pAdditionalHoverText: "[Shift + LMB] Mark as obtained/unobtained\n"
+                        pAdditionalHoverText: "[Shift + 左鍵] 標記已取得或未取得\n"
                         )
                 && io.KeyShift)
             {
@@ -290,11 +289,11 @@ namespace BozjaBuddy.GUI.Sections
         
         private void DrawOptionBar()
         {
-            ImGui.Text("Scan for obtained Notes:");
+            ImGui.Text("掃描已取得的筆記：");
             ImGui.SameLine();
-            UtilsGUI.GreyText("Type \"/collection\", choose \"Field Record\", then go through the page numbers.");
+            UtilsGUI.GreyText("輸入 /collection，打開戰地筆記，再把頁碼逐頁翻過。");
             ImGui.SameLine();
-            UtilsGUI.ShowHelpMarker("For safety reason, this plugin does not automatically update your Field note progress. As such, manual instruction is as follow:\n1. Open the Collection window, using text command \"/collection\".\n2. Choose \"Field Record\".\n3. At the bottom the Field Record in-game window are page numbers. Go through each page, and the plugin will get the data from there.\n\n- You can also add/remove a Field note from your progress by [Shift+LMB] on a field note's icon.");
+            UtilsGUI.ShowHelpMarker("為了避免誤判，此外掛不會在背景自動改寫你的戰地筆記進度。\n1. 用文字指令 /collection 打開收藏品。\n2. 選擇戰地筆記。\n3. 把視窗下方的頁碼逐頁點過，外掛會從當前頁讀取。\n\n也可以對筆記圖示按 Shift+左鍵，手動加入或移除。\n頁面節點編號沿用國際服，台灣客戶端若不同，掃描可能讀不到，需要在遊戲內確認。");
             //ImGui.SameLine();
             //UtilsGUI.ShowHelpMarker("1. Type \"/collection\".\n2. Choose [Field Record]\n3. Go through the page numbers at the bottom of Field Record window. (no need to go through the records)");
             ImGui.SameLine();
@@ -308,7 +307,7 @@ namespace BozjaBuddy.GUI.Sections
             }
             else
             {
-                UtilsGUI.SetTooltipForLastItem($"Current view mode: {(this.mPlugin.Configuration.mIsInGridMode_FieldNoteTableSection ? "GRID" : "LIST")}");
+                UtilsGUI.SetTooltipForLastItem($"目前檢視：{(this.mPlugin.Configuration.mIsInGridMode_FieldNoteTableSection ? "格狀" : "列表")}");
             }
         }
 

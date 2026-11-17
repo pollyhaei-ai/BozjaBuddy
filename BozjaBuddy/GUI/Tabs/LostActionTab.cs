@@ -16,7 +16,7 @@ namespace BozjaBuddy.GUI.Tabs
 
         public LostActionTab(Plugin pPlugin)
         {
-            this.mName = "Lost Action/Fragment";
+            this.mName = "失傳技能／碎片";
             this.mPlugin = pPlugin;
             mSortedSections = new Dictionary<int, Section>() {
                 { 0, new LostActionTableSection(this.mPlugin) },

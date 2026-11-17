@@ -1,15 +1,8 @@
 using System.Data.SQLite;
 using System;
 using System.Collections.Generic;
-using Dalamud.Game.ClientState.Fates;
-using Dalamud.Logging;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using BozjaBuddy.GUI.Sections;
 using BozjaBuddy.Utils;
-using Dalamud.Bindings.ImGui;
-using Lumina.Excel.Sheets;
 using System.Linq;
-using System.ComponentModel.Design;
 
 namespace BozjaBuddy.Data
 {
@@ -19,7 +12,6 @@ namespace BozjaBuddy.Data
         public override int mId { get; set; }
         public override string mName { get; set; }
         public FateType mType { get; set; }
-        public string mNote { get; set; } = string.Empty;
         public int mRewardMettleMin { get; set; }
         public int mRewardMettleMax { get; set; }
         public int mRewardExpMin { get; set; }
@@ -30,19 +22,6 @@ namespace BozjaBuddy.Data
         private string mTerritoryType { get; set; } = string.Empty;
         private double mMapCoordX { get; set; }
         private double mMapCoordY { get; set; }
-        public DateTime? mLastActive { get; set; } = null;
-        private Dalamud.Game.ClientState.Fates.IFate? _mCSFate = null;
-        public Dalamud.Game.ClientState.Fates.IFate? mCSFate
-        {
-            get
-            {
-                if (this._mCSFate is not null && (this._mCSFate.State == FateState.Running || this._mCSFate.State == FateState.Preparing))
-                    return this._mCSFate;
-                return null;
-            }
-            set { this._mCSFate = value; }
-        }
-        public MycDynamicEvent? mDynamicEvent = null;
         protected override Plugin mPlugin { get; set; }
 
         public Fate(Plugin pPlugin, SQLiteDataReader pPackage)
@@ -51,7 +30,6 @@ namespace BozjaBuddy.Data
             this.mId = Convert.ToInt32(pPackage["id"]);
             this.mName = (string)pPackage["name"];
             this.mType = (FateType)Convert.ToInt32(pPackage["type"] is System.DBNull ? -1 : pPackage["type"]);
-            this.mNote = pPackage["note"] is System.DBNull ? string.Empty : (string)pPackage["note"];
             this.mRewardMettleMin = Convert.ToInt32(pPackage["rewardMettleMin"] is System.DBNull ? -1 : pPackage["rewardMettleMin"]);
             this.mRewardMettleMax = Convert.ToInt32(pPackage["rewardMettleMax"] is System.DBNull ? -1 : pPackage["rewardMettleMax"]);
             this.mRewardExpMin = Convert.ToInt32(pPackage["rewardExpMin"] is System.DBNull ? -1 : pPackage["rewardExpMin"]);
@@ -69,7 +47,6 @@ namespace BozjaBuddy.Data
 
             this.mLinkFragments = new List<int>();
             this.mLocation = new Location(this.mPlugin, this.mTerritoryType, this.mMapCoordX, this.mMapCoordY);
-            this.mCSFate = null;
             this.mTabColor = UtilsGUI.Colors.GenObj_PinkFate;
 
             this.SetUpAuxiliary();
@@ -100,14 +77,14 @@ namespace BozjaBuddy.Data
                 ", ",
                 this.mLinkFieldNotes.Select(o => mPlugin.mBBDataManager.mFieldNotes.TryGetValue(o, out FieldNote? value) && value != null
                                             ? value.mName
-                                            : "unknown")
+                                            : "不明")
                                     .ToList()
                 );
 
-            return $"[{this.mName}] • [Mettle: {this.mRewardMettleMin}-{this.mRewardMettleMax}] • [Exp: {this.mRewardExpMin}-{this.mRewardExpMax}] • [Tome: {this.mRewardTome}]"
-                    + (this.mLocation != null ? $" • [Loc: {WeatherBarSection._mTerritories[this.mLocation!.mTerritoryType]} x:{this.mLocation!.mMapCoordX} y:{this.mLocation!.mMapCoordY}]" : "")
-                    + $" • [FATE chain: {tFateChainText}]"
-                    + $" • [Field Note: {tFieldNoteDrops}]";
+            return $"[{this.mName}] • [戰勲：{this.mRewardMettleMin}-{this.mRewardMettleMax}]"
+                    + (this.mLocation != null ? $" • [{this.mLocation.ToStringFull()}]" : "")
+                    + $" • [系列：{tFateChainText}]"
+                    + $" • [戰地筆記：{tFieldNoteDrops}]";
         }
         protected override string GenReprUiTooltip()
         {
@@ -134,32 +111,32 @@ namespace BozjaBuddy.Data
                 ", ",
                 this.mLinkFragments.Select(o => this.mPlugin.mBBDataManager.mFragments.ContainsKey(o)
                                             ? this.mPlugin.mBBDataManager.mFragments[o].mName
-                                            : "unknown")
+                                            : "不明")
                                    .ToList()
                 );
             string tFieldNoteDrops = string.Join(
                 ", ",
                 this.mLinkFieldNotes.Select(o => mPlugin.mBBDataManager.mFieldNotes.TryGetValue(o, out FieldNote? value) && value != null
                                             ? value.mName
-                                            : "unknown")
+                                            : "不明")
                                     .ToList()
                 );
 
-            this.mUiTooltip = $"Name: \t\t\t{this.mName}"
-                            + $"\nFATE chain:\t{tFateChainText}"
-                            + $"\nFrag drops:\t{tFragDrops}"
-                            + $"\nMettle:\t\t\t{Utils.Utils.FormatNum(this.mRewardMettleMin)} - {Utils.Utils.FormatNum(this.mRewardMettleMax)}"
-                            + $"\nExp:  \t\t\t\t{Utils.Utils.FormatNum(this.mRewardExpMin)} - {Utils.Utils.FormatNum(this.mRewardExpMax)}"
-                            + $"\nTome:  \t\t\t{Utils.Utils.FormatNum(this.mRewardTome)}"
-                            + $"\nField note:\t  {tFieldNoteDrops}";
+            this.mUiTooltip = $"名稱：\t{this.mName}"
+                            + $"\n系列：\t{tFateChainText}"
+                            + $"\n碎片：\t{tFragDrops}"
+                            + $"\n戰勲：\t{Utils.Utils.FormatNum(this.mRewardMettleMin)} - {Utils.Utils.FormatNum(this.mRewardMettleMax)}"
+                            + $"\n經驗值：\t{Utils.Utils.FormatNum(this.mRewardExpMin)} - {Utils.Utils.FormatNum(this.mRewardExpMax)}"
+                            + $"\n神典石：\t{Utils.Utils.FormatNum(this.mRewardTome)}"
+                            + $"\n戰地筆記：\t{tFieldNoteDrops}";
             return this.mUiTooltip;
         }
 
         protected override void SetUpAuxiliary()
         {
-            this.mDetail = $"[Tome: {this.mRewardTome}] \t•\t[Mettle: {this.mRewardMettleMin} - {this.mRewardMettleMax}]\t•\t[Exp: {this.mRewardExpMin} - {this.mRewardExpMax}]";
-            this.mDescription = this.mNote;
-            this.mIGMarkup = new GUI.IGMarkup.IGMarkup(this.mNote);
+            this.mDetail = $"[神典石：{this.mRewardTome}] \t•\t[戰勲：{this.mRewardMettleMin} - {this.mRewardMettleMax}]";
+            this.mDescription = string.Empty;
+            this.mIGMarkup = null;
         }
         protected override void SetUpNodeInfo()
         {
